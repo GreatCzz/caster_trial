@@ -39,11 +39,9 @@ template<typename cnt_taxon_type = unsigned char, typename cnt_type = unsigned s
 
 ChangeLog logColor("Color",
 	"2026-02-02", "Chao Zhang", "Supporting quadripartiton", "minor",
-	// +++ CASTER_TRI +++
 	"2026-06-12", "Zuizhi Chen", "CASTER_TRI: only score quartets containing reference species", "minor",
 	"2026-06-15", "Zuizhi Chen", "CASTER_TRI: adapt to TAXON_ORDER_PRIORITIZING interface", "minor",
 	"2026-06-16", "Zuizhi Chen", "CASTER_TRI: refactor scoring to direct calculation with refCnt/refColor", "minor");
-	// +++ END CASTER_TRI +++
 
 template<STEPWISE_COLOR_ATTRIBUTES Attributes> class Color{
 	using cnt_taxon_t = Attributes::cnt_taxon_t;
@@ -66,9 +64,7 @@ public:
 			vector<vector<array<cnt_taxon_t, 4> > > cnts; // cnts[iRow][iPos][iNucleotide] -> count
 			vector<index_t> taxon2row; // taxon2row[iTaxon] -> iRow in cnts
 			array<score_t, 4> eqFreqs{}; // eqFreqs[iNucleotide]
-			// +++ CASTER_TRI: which reference species this element was aligned to +++
-			size_t iReferenceTaxonId = (size_t)-1;
-			// +++ END CASTER_TRI +++
+			size_t iReferenceTaxonId = (size_t)-1; //reference species this element was aligned to
 
 			bool hasTaxon(size_t iTaxon) const noexcept{
 				return iTaxon < taxon2row.size() && taxon2row[iTaxon] != -1;
@@ -77,14 +73,14 @@ public:
 
 		vector<Element> elements;
 		index_t nGenomePos = 0;
-		// +++ CASTER_TRI: all reference species taxon IDs used for priority ordering +++
+		//all reference species taxon IDs used for priority ordering
 		vector<size_t> priorityTaxa;
-		// +++ END CASTER_TRI +++
+
 
 		size_t nElements() const noexcept { return elements.size(); }
     };
 
-	// +++ CASTER_TRI: static method for TAXON_ORDER_PRIORITIZING concept +++
+	//static method for TAXON_ORDER_PRIORITIZING concept
 	static void taxonOrderPrioritizing(std::vector<size_t>& taxonOrder) noexcept {
 		if (s_priorityTaxa.empty()) return;
 		std::vector<size_t> priority, others;
@@ -98,32 +94,29 @@ public:
 		for (size_t t : priority) taxonOrder[i++] = t;
 		for (size_t t : others) taxonOrder[i++] = t;
 	}
-	// +++ END CASTER_TRI +++
 
-	// +++ CASTER_TRI: static cache of priority taxa, set during read() +++
+	//static cache of priority taxa, set during read()
 	static inline std::vector<size_t> s_priorityTaxa;
-	// +++ END CASTER_TRI +++
 
 private:
 	SharedConstData const& sharedConstData;
     vector<array<array<cnt_t, 4>, 4> > colorCnts; // colorCnts[iGenomePos][iColor][iNucleotide] -> count (non-ref only)
-	// +++ CASTER_TRI: ref species counts (immutable, precomputed in constructor) and current color per position +++
 	vector<array<cnt_t, 4> > refCnt;     // refCnt[iGenomePos][iNucleotide] — reference species counts at each position
 	vector<size_t> refColor;             // refColor[iGenomePos] — current color of ref at each position, (size_t)-1 if not set
-	// +++ END CASTER_TRI +++
 
 	template<bool isSet> inline void elementSetOrClearTaxonColor(size_t iElement, size_t iTaxon, size_t iColor) noexcept{
 		typename SharedConstData::Element const& element = sharedConstData.elements[iElement];
 		if (!element.hasTaxon(iTaxon)) return;
 		index_t iRow = element.taxon2row[iTaxon];
 		index_t iPosBegin = element.iGenomePosBegin;
-		// +++ CASTER_TRI: ref species is excluded from colorCnts; only tracked via refColor +++
+
+		//ref species is excluded from colorCnts; only tracked via refColor
 		if (iTaxon == element.iReferenceTaxonId) {
 			for (index_t iPos : iota((index_t)0, element.nPos))
 				refColor[iPosBegin + iPos] = (isSet) ? iColor : (size_t)-1;
 			return;
 		}
-		// +++ END CASTER_TRI +++
+
 		for (index_t iPos : iota((index_t)0, element.nPos)){
 			for (index_t iNucleotide : iota((index_t)0, (index_t)4)) {
 				cnt_t& colorCnt = colorCnts[iPosBegin + iPos][iColor][iNucleotide];
@@ -134,7 +127,6 @@ private:
 		}
 	}
 	
-	// +++ CASTER_TRI: XXYY with ref separated — ref assumed in color 0; xR/yR = ref counts; x0/y0 = non-ref in color 0; x1/y1, x2/y2 = colors 1,2 +++
 	inline static cnt4_t XXYY(cnt4_t xR, cnt4_t x0, cnt4_t x1, cnt4_t x2, cnt4_t yR, cnt4_t y0, cnt4_t y1, cnt4_t y2) noexcept{
 		return xR * x0 * y1 * y2 * 2 + yR * y0 * x1 * x2 * 2 +
 		       xR * (xR - 1) * y1 * y2 + yR * (yR - 1) * x1 * x2 +
@@ -142,7 +134,7 @@ private:
 		       xR * x2 * y1 * (y1 - 1) + yR * y2 * x1 * (x1 - 1);
 	}
 
-	// +++ CASTER_TRI: scorePos with ref in virtual color 0; cnt[0]=non-ref in ref's color, cnt[1..2]=other colors, rCnt=ref counts +++
+	//scorePos with ref in virtual color 0
 	inline static score_t scorePos(array<array<cnt_t, 4>, 4> const &cnt, array<cnt_t, 4> const &rCnt, array<score_t, 4> const &pi) noexcept{
 		cnt4_t const aR = rCnt[0], cR = rCnt[1], gR = rCnt[2], tR = rCnt[3];
 		cnt4_t const a0 = cnt[0][0], c0 = cnt[0][1], g0 = cnt[0][2], t0 = cnt[0][3];
@@ -169,14 +161,11 @@ private:
 		return rryy * R2 * Y2 - (aayy + ggyy) * (R * R) * Y2 - (rrcc + rrtt) * R2 * (Y * Y)
 		     + (aacc + aatt + ggcc + ggtt) * (R * R) * (Y * Y);
 	}
-	// +++ END CASTER_TRI +++
 	
-	// +++ CASTER_TRI: quadXXYY with ref in color 0; xR/yR = ref counts; x1..x3, y1..y3 = other colors +++
 	inline static cnt4_t quadXXYY(cnt4_t x0, cnt4_t x1, cnt4_t x2, cnt4_t x3, cnt4_t y0, cnt4_t y1, cnt4_t y2, cnt4_t y3) noexcept {
 		return x0 * x1 * y2 * y3 + y0 * y1 * x2 * x3;
 	}
 
-	// +++ CASTER_TRI: quadripartition score for a single permutation; ref counts (aR..tR) in color 0 +++
 	static score_t quadPosSingle(array<cnt_t, 4> const& cnt0, array<cnt_t, 4> const& cnt1,
 		array<cnt_t, 4> const& cnt2, array<cnt_t, 4> const& cnt3, array<score_t, 4> const& pi) noexcept {
 
@@ -203,13 +192,11 @@ private:
 			+ (aacc + aatt + ggcc + ggtt) * (R * R) * (Y * Y);
 	}
 
-	// +++ CASTER_TRI: quadripartition score — 4 groups equal, cnt[0]=ref, permutations follow CASTER +++
 	inline static array<score_t, 3> quadPos(array<array<cnt_t, 4>, 4> const& cnt, array<score_t, 4> const& pi) noexcept {
 		return {quadPosSingle(cnt[0], cnt[1], cnt[2], cnt[3], pi),
 		        quadPosSingle(cnt[0], cnt[2], cnt[1], cnt[3], pi),
 		        quadPosSingle(cnt[0], cnt[3], cnt[1], cnt[2], pi)};
 	}
-	// +++ END CASTER_TRI +++
 
 public:
 	void elementSetTaxonColor(size_t iElement, size_t iTaxon, size_t iColor) noexcept{
@@ -220,7 +207,7 @@ public:
 		elementSetOrClearTaxonColor<false>(iElement, iTaxon, iColor);
 	}
 	
-	// +++ CASTER_TRI: elementScore — local copy + swap, no mutable needed +++
+	//Tripartition score: scorePos with ref in virtual color 0;
 	score_t elementScore(size_t iElement) const noexcept{
 		index_t iGenomePosBegin = sharedConstData.elements[iElement].iGenomePosBegin;
 		index_t nPos = sharedConstData.elements[iElement].nPos;
@@ -237,7 +224,7 @@ public:
 		return res;
 	}
 
-	// +++ CASTER_TRI: elementQuadripartitionScores — local copy, ref replaces its color group +++
+	//Edge NNI score
 	array<score_t, 3> elementQuadripartitionScores(size_t iElement) const noexcept {
 		index_t iGenomePosBegin = sharedConstData.elements[iElement].iGenomePosBegin;
 		index_t nPos = sharedConstData.elements[iElement].nPos;
@@ -254,9 +241,8 @@ public:
 		}
 		return res;
 	}
-	// +++ END CASTER_TRI +++
 
-	// +++ CASTER_TRI: constructor precomputes refCnt from elements; initializes refColor to -1 +++
+	//CASTER_TRI: constructor precomputes refCnt from elements;
 	Color(SharedConstData const& data) noexcept : sharedConstData(data), colorCnts(data.nGenomePos), refCnt(data.nGenomePos), refColor(data.nGenomePos, (size_t)-1) {
 		for (auto const& element : sharedConstData.elements) {
 			if (!element.hasTaxon(element.iReferenceTaxonId)) continue;
@@ -274,9 +260,7 @@ public:
 
 ChangeLog logDriverHelper("DriverHelper",
 	"2026-02-04", "Chao Zhang", "Little code refactoring, no functional change", "patch",
-	// +++ CASTER_TRI +++
 	"2026-06-12", "Zuizhi Chen", "CASTER_TRI: add fasta2ref parsing, multi-fasta input, and multi-ref support", "minor");
-	// +++ END CASTER_TRI +++
 
 namespace DriverHelper {
 
@@ -297,7 +281,7 @@ template<typename T> T sum(const array<T, 4>& cnt) {
 	return result;
 }
 
-// +++ CASTER_TRI: fasta2ref parsing, multi-fasta input, multi-ref support +++
+//CASTER_TRI: fasta2ref parsing, multi-fasta input, multi-ref support
 template<typename DataClass> DataClass read() {
 	using cnt_taxon_t = DataClass::ParentClass::cnt_taxon_t;
 	using cnt_t = DataClass::ParentClass::cnt_t;
@@ -306,7 +290,6 @@ template<typename DataClass> DataClass read() {
 	log.log() << "Parsing fasta2ref file and reading input..." << std::endl;
 	DataClass sharedConstData;
 
-	// +++ CASTER_TRI: parse fasta2ref file +++
 	string fasta2refFile = ARG.get<string>("input");
 	ifstream finF2R(fasta2refFile);
 	if (!finF2R.is_open()) {
@@ -346,26 +329,19 @@ template<typename DataClass> DataClass read() {
 	log.log() << "#Reference species (distinct): " << priorityTaxa.size() << std::endl;
 	for (size_t rId : priorityTaxa) log.log() << "  " << common::taxonName2ID[rId] << std::endl;
 	log.log() << "#Fasta files: " << fastaFiles.size() << std::endl;
-	// +++ END CASTER_TRI +++
 
-	// +++ CASTER_TRI: create temporary fasta list file for AlignmentParser +++
+	//CASTER_TRI: create temporary fasta list file for AlignmentParser
 	string tempListFile = "/tmp/caster_tri_fasta_list_" + std::to_string(std::hash<std::thread::id>()(std::this_thread::get_id())) + ".txt";
 	{
 		ofstream fout(tempListFile);
 		for (const string& f : fastaFiles) fout << f << "\n";
 	}
-	// +++ END CASTER_TRI +++
 
-	// +++ CASTER_TRI: iterate alignments; track ref for each file +++
 	aligment_utilities::AlignmentParser AP(tempListFile, 2), AP2(tempListFile, 3);
 	size_t iFile = 0;
-	// +++ END CASTER_TRI +++
 
 	while (AP.nextAlignment()) {
-		// +++ CASTER_TRI: get the reference species for this alignment +++
 		size_t fileRefTaxonId = fileRefTaxonIds[iFile++];
-		// +++ END CASTER_TRI +++
-
 		size_t nSites = AP.getLength();
 		size_t chunkMaxSize = ARG.get<size_t>("chunk");
 		size_t nChunk = (nSites + chunkMaxSize - 1) / chunkMaxSize;
@@ -449,9 +425,7 @@ template<typename DataClass> DataClass read() {
 			element.cnts.resize(taxon2row.size(), vector<array<typename DataClass::ParentClass::cnt_taxon_t, 4> >(element.nPos));
 			element.taxon2row.resize(common::taxonName2ID.nTaxa(), -1);
 			element.eqFreqs = eqfreq[i];
-			// +++ CASTER_TRI: tag element with its reference species +++
-			element.iReferenceTaxonId = fileRefTaxonId;
-			// +++ END CASTER_TRI +++
+			element.iReferenceTaxonId = fileRefTaxonId; //tag element with its reference species
 			sharedConstData.elements.push_back(element);
 			sharedConstData.nGenomePos += element.nPos;
 		}
@@ -475,26 +449,19 @@ template<typename DataClass> DataClass read() {
 		}
 	}
 
-	// +++ CASTER_TRI: clean up temp file +++
-	std::remove(tempListFile.c_str());
-	// +++ END CASTER_TRI +++
+	std::remove(tempListFile.c_str()); //clean up temp file
 
-	// +++ CASTER_TRI: cache priority taxa for taxonOrderPrioritizing static method +++
 	DataClass::ParentClass::s_priorityTaxa = sharedConstData.priorityTaxa;
-	// +++ END CASTER_TRI +++
 
 	return sharedConstData;
 }
-// +++ END CASTER_TRI +++
 
 };
 
 ChangeLog logDriver("Driver",
 	"2026-02-01", "Chao Zhang", "Change prgramName to caster", "patch",
 	"2026-02-08", "Chao Zhang", "Adding more type support", "patch",
-	// +++ CASTER_TRI: update driver for caster-tri +++
 	"2026-06-12", "Zuizhi Chen", "CASTER_TRI: rename to caster-tri, use -i for fasta2ref input", "minor");
-	// +++ END CASTER_TRI +++
 
 template<bool> class Driver : public common::LogInfo
 {
@@ -503,11 +470,9 @@ template<bool> class Driver : public common::LogInfo
 public:
 	using DataClasses = std::variant<typename Color<StepwiseColorDefaultAttributes<bool, unsigned char> >::SharedConstData, typename Color<StepwiseColorDefaultAttributes<unsigned char, unsigned char> >::SharedConstData, typename Color<StepwiseColorDefaultAttributes<bool, unsigned short> >::SharedConstData, typename Color<StepwiseColorDefaultAttributes<unsigned char, unsigned short> >::SharedConstData, typename Color<StepwiseColorDefaultAttributes<unsigned short, unsigned short> >::SharedConstData>;
 
-	// +++ CASTER_TRI: updated program name +++
 	static std::pair<string, string> programNames() noexcept {
 		return { "caster-tri", "CASTER-TRI: Coalescence-aware Alignment-based Species Tree EstimatoR with TRI-reference" };
 	}
-	// +++ END CASTER_TRI +++
 
 	static void addArguments() noexcept {
 		ARG.addArgument('\0', "chunk", "integer", "The maximum number of sites in each local aligment block for parameter estimation", 0, true, true, "10000");
@@ -567,9 +532,7 @@ bin/caster-tri -i example/fasta2ref.txt -o output.tre
 )YOHANETYO";
 	}
 
-	// +++ CASTER_TRI +++
 	string programName() const noexcept override { return "caster-tri"; }
-	// +++ END CASTER_TRI +++
 
 	string exampleInput() const noexcept override { return "fasta2ref.txt"; }
 };
