@@ -13,10 +13,6 @@ using std::array;
 using std::string;
 using std::unordered_map;
 
-// +++ CASTER_TRI: static cache of priority taxa for taxonOrderPrioritizing (set during read()) +++
-inline std::vector<size_t> s_priorityTaxa;
-// +++ END CASTER_TRI +++
-	
 namespace DriverHelper {
 	template<typename DataClasses> DataClasses read();
 };
@@ -45,7 +41,8 @@ ChangeLog logColor("Color",
 	"2026-02-02", "Chao Zhang", "Supporting quadripartiton", "minor",
 	// +++ CASTER_TRI +++
 	"2026-06-12", "Zuizhi Chen", "CASTER_TRI: only score quartets containing reference species", "minor",
-	"2026-06-15", "Zuizhi Chen", "CASTER_TRI: adapt to TAXON_ORDER_PRIORITIZING interface", "minor");
+	"2026-06-15", "Zuizhi Chen", "CASTER_TRI: adapt to TAXON_ORDER_PRIORITIZING interface", "minor",
+	"2026-06-16", "Zuizhi Chen", "CASTER_TRI: refactor scoring to direct calculation with refCnt/refColor", "minor");
 	// +++ END CASTER_TRI +++
 
 template<STEPWISE_COLOR_ATTRIBUTES Attributes> class Color{
@@ -88,7 +85,6 @@ public:
     };
 
 	// +++ CASTER_TRI: static method for TAXON_ORDER_PRIORITIZING concept +++
-	// Moves all reference species to the front of taxonOrder (preserving their shuffled relative order)
 	static void taxonOrderPrioritizing(std::vector<size_t>& taxonOrder) noexcept {
 		if (s_priorityTaxa.empty()) return;
 		std::vector<size_t> priority, others;
@@ -104,11 +100,16 @@ public:
 	}
 	// +++ END CASTER_TRI +++
 
+	// +++ CASTER_TRI: static cache of priority taxa, set during read() +++
+	static inline std::vector<size_t> s_priorityTaxa;
+	// +++ END CASTER_TRI +++
+
 private:
 	SharedConstData const& sharedConstData;
-    vector<array<array<cnt_t, 4>, 4> > colorCnts; // colorCnts[iGenomePos][iColor][iNucleotide] -> count
-	// +++ CASTER_TRI: reference species counts for R-subtraction; mutually exclusive w.r.t element refs +++
-	vector<array<array<cnt_t, 4>, 4> > rColorCnts; // rColorCnts[iGenomePos][iColor][iNucleotide] -> count of ref only
+    vector<array<array<cnt_t, 4>, 4> > colorCnts; // colorCnts[iGenomePos][iColor][iNucleotide] -> count (non-ref only)
+	// +++ CASTER_TRI: ref species counts (immutable, precomputed in constructor) and current color per position +++
+	vector<array<cnt_t, 4> > refCnt;     // refCnt[iGenomePos][iNucleotide] — reference species counts at each position
+	vector<size_t> refColor;             // refColor[iGenomePos] — current color of ref at each position, (size_t)-1 if not set
 	// +++ END CASTER_TRI +++
 
 	template<bool isSet> inline void elementSetOrClearTaxonColor(size_t iElement, size_t iTaxon, size_t iColor) noexcept{
@@ -116,6 +117,13 @@ private:
 		if (!element.hasTaxon(iTaxon)) return;
 		index_t iRow = element.taxon2row[iTaxon];
 		index_t iPosBegin = element.iGenomePosBegin;
+		// +++ CASTER_TRI: ref species is excluded from colorCnts; only tracked via refColor +++
+		if (iTaxon == element.iReferenceTaxonId) {
+			for (index_t iPos : iota((index_t)0, element.nPos))
+				refColor[iPosBegin + iPos] = (isSet) ? iColor : (size_t)-1;
+			return;
+		}
+		// +++ END CASTER_TRI +++
 		for (index_t iPos : iota((index_t)0, element.nPos)){
 			for (index_t iNucleotide : iota((index_t)0, (index_t)4)) {
 				cnt_t& colorCnt = colorCnts[iPosBegin + iPos][iColor][iNucleotide];
@@ -124,95 +132,60 @@ private:
 				else colorCnt -= cnt;
 			}
 		}
-		// +++ CASTER_TRI: if this taxon is the ref species for this element, also track its counts +++
-		if (iTaxon == element.iReferenceTaxonId) {
-			for (index_t iPos : iota((index_t)0, element.nPos)){
-				for (index_t iNucleotide : iota((index_t)0, (index_t)4)) {
-					cnt_t& rCnt = rColorCnts[iPosBegin + iPos][iColor][iNucleotide];
-					cnt_t cnt = element.cnts[iRow][iPos][iNucleotide];
-					if constexpr (isSet) rCnt += cnt;
-					else rCnt -= cnt;
-				}
-			}
-		}
-		// +++ END CASTER_TRI +++
 	}
 	
-	inline static cnt4_t XXYY(cnt4_t x0, cnt4_t x1, cnt4_t x2, cnt4_t y0, cnt4_t y1, cnt4_t y2) noexcept{
-		return x0 * (x0 - 1) * y1 * y2 + x1 * (x1 - 1) * y2 * y0 + x2 * (x2 - 1) * y0 * y1
-			 + y0 * (y0 - 1) * x1 * x2 + y1 * (y1 - 1) * x2 * x0 + y2 * (y2 - 1) * x0 * x1;
+	// +++ CASTER_TRI: XXYY with ref separated — ref assumed in color 0; xR/yR = ref counts; x0/y0 = non-ref in color 0; x1/y1, x2/y2 = colors 1,2 +++
+	inline static cnt4_t XXYY(cnt4_t xR, cnt4_t x0, cnt4_t x1, cnt4_t x2, cnt4_t yR, cnt4_t y0, cnt4_t y1, cnt4_t y2) noexcept{
+		return xR * x0 * y1 * y2 * 2 + yR * y0 * x1 * x2 * 2 +
+		       xR * (xR - 1) * y1 * y2 + yR * (yR - 1) * x1 * x2 +
+		       xR * x1 * y2 * (y2 - 1) + yR * y1 * x2 * (x2 - 1) +
+		       xR * x2 * y1 * (y1 - 1) + yR * y2 * x1 * (x1 - 1);
 	}
 
-	// +++ CASTER_TRI: internal score helper operating on cnt4_t values +++
-	inline static score_t scorePosFromValues(
-		cnt4_t a0, cnt4_t c0, cnt4_t g0, cnt4_t t0,
-		cnt4_t a1, cnt4_t c1, cnt4_t g1, cnt4_t t1,
-		cnt4_t a2, cnt4_t c2, cnt4_t g2, cnt4_t t2,
-		array<score_t, 4> const &pi) noexcept{
+	// +++ CASTER_TRI: scorePos with ref in virtual color 0; cnt[0]=non-ref in ref's color, cnt[1..2]=other colors, rCnt=ref counts +++
+	inline static score_t scorePos(array<array<cnt_t, 4>, 4> const &cnt, array<cnt_t, 4> const &rCnt, array<score_t, 4> const &pi) noexcept{
+		cnt4_t const aR = rCnt[0], cR = rCnt[1], gR = rCnt[2], tR = rCnt[3];
+		cnt4_t const a0 = cnt[0][0], c0 = cnt[0][1], g0 = cnt[0][2], t0 = cnt[0][3];
+		cnt4_t const a1 = cnt[1][0], c1 = cnt[1][1], g1 = cnt[1][2], t1 = cnt[1][3];
+		cnt4_t const a2 = cnt[2][0], c2 = cnt[2][1], g2 = cnt[2][2], t2 = cnt[2][3];
 
 		score_t const A = pi[0], C = pi[1], G = pi[2], T = pi[3];
 		score_t const R = A + G, Y = C + T, R2 = A * A + G * G, Y2 = C * C + T * T;
 		cnt4_t const r0 = a0 + g0, y0 = c0 + t0;
 		cnt4_t const r1 = a1 + g1, y1 = c1 + t1;
 		cnt4_t const r2 = a2 + g2, y2 = c2 + t2;
+		cnt4_t const rR = aR + gR, yR = cR + tR;
 
-		cnt4_t const rryy = XXYY(r0, r1, r2, y0, y1, y2);
-
-		cnt4_t const aayy = XXYY(a0, a1, a2, y0, y1, y2);
-		cnt4_t const ggyy = XXYY(g0, g1, g2, y0, y1, y2);
-		cnt4_t const rrcc = XXYY(r0, r1, r2, c0, c1, c2);
-		cnt4_t const rrtt = XXYY(r0, r1, r2, t0, t1, t2);
-
-		cnt4_t const aacc = XXYY(a0, a1, a2, c0, c1, c2);
-		cnt4_t const aatt = XXYY(a0, a1, a2, t0, t1, t2);
-		cnt4_t const ggcc = XXYY(g0, g1, g2, c0, c1, c2);
-		cnt4_t const ggtt = XXYY(g0, g1, g2, t0, t1, t2);
+		cnt4_t const rryy = XXYY(rR, r0, r1, r2, yR, y0, y1, y2);
+		cnt4_t const aayy = XXYY(aR, a0, a1, a2, yR, y0, y1, y2);
+		cnt4_t const ggyy = XXYY(gR, g0, g1, g2, yR, y0, y1, y2);
+		cnt4_t const rrcc = XXYY(rR, r0, r1, r2, cR, c0, c1, c2);
+		cnt4_t const rrtt = XXYY(rR, r0, r1, r2, tR, t0, t1, t2);
+		cnt4_t const aacc = XXYY(aR, a0, a1, a2, cR, c0, c1, c2);
+		cnt4_t const aatt = XXYY(aR, a0, a1, a2, tR, t0, t1, t2);
+		cnt4_t const ggcc = XXYY(gR, g0, g1, g2, cR, c0, c1, c2);
+		cnt4_t const ggtt = XXYY(gR, g0, g1, g2, tR, t0, t1, t2);
 
 		return rryy * R2 * Y2 - (aayy + ggyy) * (R * R) * Y2 - (rrcc + rrtt) * R2 * (Y * Y)
-			 + (aacc + aatt + ggcc + ggtt) * (R * R) * (Y * Y);
-	}
-
-	inline static score_t scorePos(array<array<cnt_t, 4>, 4> const &cnt, array<score_t, 4> const &pi) noexcept{
-		return scorePosFromValues(
-			(cnt4_t)cnt[0][0], (cnt4_t)cnt[0][1], (cnt4_t)cnt[0][2], (cnt4_t)cnt[0][3],
-			(cnt4_t)cnt[1][0], (cnt4_t)cnt[1][1], (cnt4_t)cnt[1][2], (cnt4_t)cnt[1][3],
-			(cnt4_t)cnt[2][0], (cnt4_t)cnt[2][1], (cnt4_t)cnt[2][2], (cnt4_t)cnt[2][3],
-			pi);
-	}
-
-	// +++ CASTER_TRI: scorePos with R-subtraction (only count quartets containing R) +++
-	inline static score_t scorePosMinusR(array<array<cnt_t, 4>, 4> const &cnt, array<array<cnt_t, 4>, 4> const &rCnt, array<score_t, 4> const &pi) noexcept{
-		score_t all = scorePosFromValues(
-			(cnt4_t)cnt[0][0], (cnt4_t)cnt[0][1], (cnt4_t)cnt[0][2], (cnt4_t)cnt[0][3],
-			(cnt4_t)cnt[1][0], (cnt4_t)cnt[1][1], (cnt4_t)cnt[1][2], (cnt4_t)cnt[1][3],
-			(cnt4_t)cnt[2][0], (cnt4_t)cnt[2][1], (cnt4_t)cnt[2][2], (cnt4_t)cnt[2][3],
-			pi);
-		score_t minusR = scorePosFromValues(
-			(cnt4_t)cnt[0][0] - (cnt4_t)rCnt[0][0], (cnt4_t)cnt[0][1] - (cnt4_t)rCnt[0][1], (cnt4_t)cnt[0][2] - (cnt4_t)rCnt[0][2], (cnt4_t)cnt[0][3] - (cnt4_t)rCnt[0][3],
-			(cnt4_t)cnt[1][0] - (cnt4_t)rCnt[1][0], (cnt4_t)cnt[1][1] - (cnt4_t)rCnt[1][1], (cnt4_t)cnt[1][2] - (cnt4_t)rCnt[1][2], (cnt4_t)cnt[1][3] - (cnt4_t)rCnt[1][3],
-			(cnt4_t)cnt[2][0] - (cnt4_t)rCnt[2][0], (cnt4_t)cnt[2][1] - (cnt4_t)rCnt[2][1], (cnt4_t)cnt[2][2] - (cnt4_t)rCnt[2][2], (cnt4_t)cnt[2][3] - (cnt4_t)rCnt[2][3],
-			pi);
-		return all - minusR;
+		     + (aacc + aatt + ggcc + ggtt) * (R * R) * (Y * Y);
 	}
 	// +++ END CASTER_TRI +++
 	
+	// +++ CASTER_TRI: quadXXYY with ref in color 0; xR/yR = ref counts; x1..x3, y1..y3 = other colors +++
 	inline static cnt4_t quadXXYY(cnt4_t x0, cnt4_t x1, cnt4_t x2, cnt4_t x3, cnt4_t y0, cnt4_t y1, cnt4_t y2, cnt4_t y3) noexcept {
 		return x0 * x1 * y2 * y3 + y0 * y1 * x2 * x3;
 	}
 
-	static score_t quadPosSingle(
-		cnt4_t a0, cnt4_t c0, cnt4_t g0, cnt4_t t0,
-		cnt4_t a1, cnt4_t c1, cnt4_t g1, cnt4_t t1,
-		cnt4_t a2, cnt4_t c2, cnt4_t g2, cnt4_t t2,
-		cnt4_t a3, cnt4_t c3, cnt4_t g3, cnt4_t t3,
-		array<score_t, 4> const& pi) noexcept {
+	// +++ CASTER_TRI: quadripartition score for a single permutation; ref counts (aR..tR) in color 0 +++
+	static score_t quadPosSingle(array<cnt_t, 4> const& cnt0, array<cnt_t, 4> const& cnt1,
+		array<cnt_t, 4> const& cnt2, array<cnt_t, 4> const& cnt3, array<score_t, 4> const& pi) noexcept {
 
 		score_t const A = pi[0], C = pi[1], G = pi[2], T = pi[3];
 		score_t const R = A + G, Y = C + T, R2 = A * A + G * G, Y2 = C * C + T * T;
-		cnt4_t const r0 = a0 + g0, y0 = c0 + t0;
-		cnt4_t const r1 = a1 + g1, y1 = c1 + t1;
-		cnt4_t const r2 = a2 + g2, y2 = c2 + t2;
-		cnt4_t const r3 = a3 + g3, y3 = c3 + t3;
+		cnt4_t const a0 = cnt0[0], c0 = cnt0[1], g0 = cnt0[2], t0 = cnt0[3], r0 = a0 + g0, y0 = c0 + t0;
+		cnt4_t const a1 = cnt1[0], c1 = cnt1[1], g1 = cnt1[2], t1 = cnt1[3], r1 = a1 + g1, y1 = c1 + t1;
+		cnt4_t const a2 = cnt2[0], c2 = cnt2[1], g2 = cnt2[2], t2 = cnt2[3], r2 = a2 + g2, y2 = c2 + t2;
+		cnt4_t const a3 = cnt3[0], c3 = cnt3[1], g3 = cnt3[2], t3 = cnt3[3], r3 = a3 + g3, y3 = c3 + t3;
 
 		cnt4_t const rryy = quadXXYY(r0, r1, r2, r3, y0, y1, y2, y3);
 
@@ -230,34 +203,11 @@ private:
 			+ (aacc + aatt + ggcc + ggtt) * (R * R) * (Y * Y);
 	}
 
-	inline static score_t quadPos(array<cnt_t, 4> const& cnt0, array<cnt_t, 4> const& cnt1,
-		array<cnt_t, 4> const& cnt2, array<cnt_t, 4> const& cnt3, array<score_t, 4> const& pi) noexcept {
-
-		return quadPosSingle(
-			(cnt4_t)cnt0[0], (cnt4_t)cnt0[1], (cnt4_t)cnt0[2], (cnt4_t)cnt0[3],
-			(cnt4_t)cnt1[0], (cnt4_t)cnt1[1], (cnt4_t)cnt1[2], (cnt4_t)cnt1[3],
-			(cnt4_t)cnt2[0], (cnt4_t)cnt2[1], (cnt4_t)cnt2[2], (cnt4_t)cnt2[3],
-			(cnt4_t)cnt3[0], (cnt4_t)cnt3[1], (cnt4_t)cnt3[2], (cnt4_t)cnt3[3],
-			pi);
-	}
-
+	// +++ CASTER_TRI: quadripartition score — 4 groups equal, cnt[0]=ref, permutations follow CASTER +++
 	inline static array<score_t, 3> quadPos(array<array<cnt_t, 4>, 4> const& cnt, array<score_t, 4> const& pi) noexcept {
-		return { quadPos(cnt[0], cnt[1], cnt[2], cnt[3], pi),
-				quadPos(cnt[0], cnt[2], cnt[1], cnt[3], pi),
-				quadPos(cnt[0], cnt[3], cnt[1], cnt[2], pi) };
-	}
-
-	// +++ CASTER_TRI: quadPos with R-subtraction (only count quartets containing R) +++
-	inline static array<score_t, 3> quadPosMinusR(array<array<cnt_t, 4>, 4> const& cnt, array<array<cnt_t, 4>, 4> const& rCnt, array<score_t, 4> const& pi) noexcept {
-		array<score_t, 3> all = quadPos(cnt, pi);
-
-		auto g = [&](int c, int n) -> cnt4_t { return (cnt4_t)cnt[c][n] - (cnt4_t)rCnt[c][n]; };
-
-		score_t minusR0 = quadPosSingle(g(0,0),g(0,1),g(0,2),g(0,3), g(1,0),g(1,1),g(1,2),g(1,3), g(2,0),g(2,1),g(2,2),g(2,3), g(3,0),g(3,1),g(3,2),g(3,3), pi);
-		score_t minusR1 = quadPosSingle(g(0,0),g(0,1),g(0,2),g(0,3), g(2,0),g(2,1),g(2,2),g(2,3), g(1,0),g(1,1),g(1,2),g(1,3), g(3,0),g(3,1),g(3,2),g(3,3), pi);
-		score_t minusR2 = quadPosSingle(g(0,0),g(0,1),g(0,2),g(0,3), g(3,0),g(3,1),g(3,2),g(3,3), g(1,0),g(1,1),g(1,2),g(1,3), g(2,0),g(2,1),g(2,2),g(2,3), pi);
-
-		return { all[0] - minusR0, all[1] - minusR1, all[2] - minusR2 };
+		return {quadPosSingle(cnt[0], cnt[1], cnt[2], cnt[3], pi),
+		        quadPosSingle(cnt[0], cnt[2], cnt[1], cnt[3], pi),
+		        quadPosSingle(cnt[0], cnt[3], cnt[1], cnt[2], pi)};
 	}
 	// +++ END CASTER_TRI +++
 
@@ -270,7 +220,7 @@ public:
 		elementSetOrClearTaxonColor<false>(iElement, iTaxon, iColor);
 	}
 	
-	// +++ CASTER_TRI: elementScore with R-subtraction (each position's rColorCnts is for the correct ref) +++
+	// +++ CASTER_TRI: elementScore — local copy + swap, no mutable needed +++
 	score_t elementScore(size_t iElement) const noexcept{
 		index_t iGenomePosBegin = sharedConstData.elements[iElement].iGenomePosBegin;
 		index_t nPos = sharedConstData.elements[iElement].nPos;
@@ -279,12 +229,15 @@ public:
 		score_t res = 0;
 		for (index_t iPos : iota((index_t)0, nPos)){
 			index_t gPos = iGenomePosBegin + iPos;
-			res += scorePosMinusR(colorCnts[gPos], rColorCnts[gPos], element.eqFreqs);
+			size_t C = refColor[gPos];
+			array<array<cnt_t, 4>, 4> c = colorCnts[gPos];
+			if (C != 0) std::swap(c[0], c[C]);
+			res += scorePos(c, refCnt[gPos], element.eqFreqs);
 		}
 		return res;
 	}
 
-	// +++ CASTER_TRI: elementQuadripartitionScores with R-subtraction +++
+	// +++ CASTER_TRI: elementQuadripartitionScores — local copy, ref replaces its color group +++
 	array<score_t, 3> elementQuadripartitionScores(size_t iElement) const noexcept {
 		index_t iGenomePosBegin = sharedConstData.elements[iElement].iGenomePosBegin;
 		index_t nPos = sharedConstData.elements[iElement].nPos;
@@ -293,14 +246,28 @@ public:
 		array<score_t, 3> res = {0, 0, 0};
 		for (index_t iPos : iota((index_t)0, nPos)) {
 			index_t gPos = iGenomePosBegin + iPos;
-			array<score_t, 3> part = quadPosMinusR(colorCnts[gPos], rColorCnts[gPos], element.eqFreqs);
+			size_t C = refColor[gPos];
+			array<array<cnt_t, 4>, 4> c = colorCnts[gPos];
+			c[C] = refCnt[gPos];
+			array<score_t, 3> part = quadPos(c, element.eqFreqs);
 			for (index_t i : iota((index_t)0, (index_t)3)) res[i] += part[i];
 		}
 		return res;
 	}
 	// +++ END CASTER_TRI +++
 
-	Color(SharedConstData const& data) noexcept : sharedConstData(data), colorCnts(data.nGenomePos), rColorCnts(data.nGenomePos) {}
+	// +++ CASTER_TRI: constructor precomputes refCnt from elements; initializes refColor to -1 +++
+	Color(SharedConstData const& data) noexcept : sharedConstData(data), colorCnts(data.nGenomePos), refCnt(data.nGenomePos), refColor(data.nGenomePos, (size_t)-1) {
+		for (auto const& element : sharedConstData.elements) {
+			if (!element.hasTaxon(element.iReferenceTaxonId)) continue;
+			index_t refRow = element.taxon2row[element.iReferenceTaxonId];
+			for (index_t iPos : iota((index_t)0, element.nPos)) {
+				index_t gPos = element.iGenomePosBegin + iPos;
+				for (index_t nuc : iota((index_t)0, (index_t)4))
+					refCnt[gPos][nuc] = element.cnts[refRow][iPos][nuc];
+			}
+		}
+	}
 
 	template<typename DataClasses> friend DataClasses DriverHelper::read();
 };
@@ -330,10 +297,7 @@ template<typename T> T sum(const array<T, 4>& cnt) {
 	return result;
 }
 
-// +++ CASTER_TRI: rewritten read() with multi-ref fasta2ref support +++
-// Parses a fasta2ref file (each line: <fasta_path> <reference_species>),
-// reads all fasta files, and aggregates into a single SharedConstData.
-// Each element carries its own reference species; per-ref counts tracked for R-subtraction.
+// +++ CASTER_TRI: fasta2ref parsing, multi-fasta input, multi-ref support +++
 template<typename DataClass> DataClass read() {
 	using cnt_taxon_t = DataClass::ParentClass::cnt_taxon_t;
 	using cnt_t = DataClass::ParentClass::cnt_t;
@@ -349,14 +313,12 @@ template<typename DataClass> DataClass read() {
 		throw std::logic_error("Cannot open fasta2ref file: " + fasta2refFile);
 	}
 
-	// Get the directory of fasta2ref file for resolving relative paths
 	string fasta2refDir;
 	{
 		size_t pos = fasta2refFile.find_last_of("/\\");
 		if (pos != string::npos) fasta2refDir = fasta2refFile.substr(0, pos + 1);
 	}
 
-	// +++ CASTER_TRI: collect (fasta_path, ref_taxon_id) pairs; dedup refs for priorityTaxa +++
 	vector<string> fastaFiles;
 	vector<size_t> fileRefTaxonIds;
 	vector<size_t>& priorityTaxa = sharedConstData.priorityTaxa;
@@ -435,8 +397,8 @@ template<typename DataClass> DataClass read() {
 			}
 
 			size_t maxSpeciesman = 0;
-			for (auto const& element : nSpeciesmen) {
-				maxSpeciesman = std::max(maxSpeciesman, element.second);
+			for (auto const& elem : nSpeciesmen) {
+				maxSpeciesman = std::max(maxSpeciesman, elem.second);
 			}
 
 			if (std::same_as<cnt_taxon_t, bool> && maxSpeciesman >= 2) {
@@ -518,7 +480,7 @@ template<typename DataClass> DataClass read() {
 	// +++ END CASTER_TRI +++
 
 	// +++ CASTER_TRI: cache priority taxa for taxonOrderPrioritizing static method +++
-	s_priorityTaxa = sharedConstData.priorityTaxa;
+	DataClass::ParentClass::s_priorityTaxa = sharedConstData.priorityTaxa;
 	// +++ END CASTER_TRI +++
 
 	return sharedConstData;
@@ -565,13 +527,11 @@ protected:
 	string introduction() const noexcept override {
 		return R"YOHANETYO(# CASTER-TRI: Coalescence-aware Alignment-based Species Tree EstimatoR with TRI-reference
 
-[<img src="../misc/CASTER.png" width="500"/>](../misc/CASTER.png)
-
-CASTER-TRI is a variant of CASTER that restricts quartet scoring to only those quartets that contain a triangulation reference species (R). This is designed for phylogenomic analyses where multiple fasta files are aligned to a common reference genome.
+CASTER-TRI is a variant of CASTER that restricts quartet scoring to only those quartets that contain a reference species (R). This is designed for phylogenomic analyses where multiple fasta files are aligned to a common reference genome.
 
 ## How it works
 1. Multiple fasta alignment files are provided via a `fasta2ref` file.
-2. A single reference species (R) is specified per alignment batch.
+2. A reference species (R) is specified per alignment.
 3. Only quartets containing the reference species contribute to the tree score.
 4. The reference species is always placed first during heuristic search to avoid information loss.
 
@@ -580,9 +540,6 @@ While CASTER scores all possible quartets across the alignment, CASTER-TRI only 
 
 This is a modification from CASTER (Coalescence-aware Alignment-based Species Tree EstimatoR). See the CASTER publication for details of the underlying statistical model.
 
-## Publication
-
-Chao Zhang, Rasmus Nielsen, Siavash Mirarab, CASTER: Direct species tree inference from whole-genome alignments. Science (2025) https://www.science.org/doi/10.1126/science.adk9688
 )YOHANETYO";
 	}
 
@@ -595,39 +552,17 @@ CASTER-TRI uses a `fasta2ref` file to specify the mapping between fasta alignmen
 Each line contains a fasta file path followed by the reference species name, separated by whitespace:
 ```
 /path/to/alignment1.fasta    Felis_catus
-/path/to/alignment2.fasta    Felis_catus
+/path/to/alignment2.fasta    Otocolobus_manul
 ```
-Currently, all alignment files must use the same reference species (single-reference mode).
 
 ## Fasta file format
 * Each fasta file should be a multiple sequence alignment in FASTA format.
 * All fasta files should contain the same set of species (may be in different order).
 * Each fasta file represents the same genomic region aligned to a different reference genome or using different alignment parameters.
-* Only A, C, G, T characters are considered. Gap characters ('-') are ignored.
-
-Example fasta file:
-```
->Felis_catus
-AACCTTGG
->Panthera_tigris
-AACCTTGG
->Panthera_pardus
-AACCGTGG
->Acinonyx_jubatus
-AACCGTCG
-```
-
-Multiple speciesmen per species are supported for multiploid data:
-```
->Felis_catus
-AACCTTGG
->Felis_catus
-AACCTTGC
-```
 
 ## Usage
 ```
-bin/caster-tri --fasta2ref example/fasta2ref.txt -o output.tre
+bin/caster-tri -i example/fasta2ref.txt -o output.tre
 ```
 )YOHANETYO";
 	}
