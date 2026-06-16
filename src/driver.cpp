@@ -2,6 +2,10 @@
 #include "optimization_algorithm.hpp"
 #include "quadripartition_support.hpp"
 
+#ifdef CASTER_TRI
+#include "caster_tri.hpp"
+namespace my_tool = caster_tri;
+#else
 #ifdef CASTER
 #include "caster.hpp"
 namespace my_tool = caster;
@@ -16,6 +20,7 @@ namespace my_tool = sister;
 #else
 #include "astral.hpp"
 namespace my_tool = astral;
+#endif
 #endif
 #endif
 #endif

@@ -1,0 +1,1 @@
+/project/aster2/bin/caster_tri -i /project/aster2/example/test_caster_tri/test_multi_ref/fasta2ref.txt -o /project/aster2/example/test_caster_tri/test_multi_ref/output_rooted.tre -t 4 --root Canis_lupus_familiaris

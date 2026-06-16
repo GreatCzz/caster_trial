@@ -1,0 +1,2 @@
+test_small_felis.fasta       Felis_catus
+test_small_otocolobus.fasta  Otocolobus_manul

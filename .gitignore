@@ -7,3 +7,6 @@ src/test
 bin/
 doc/
 log.txt
+*.tre
+example/test_caster_tri/test_full.fasta
+example/test_caster_tri/test_full.fasta

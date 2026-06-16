@@ -1,4 +1,4 @@
-all: astral caster sister
+all: astral caster sister caster_tri
 
 dir:
 	g++ -v 2>&1 | tail -n 1
@@ -13,6 +13,9 @@ caster: dir
 	
 sister: dir
 	g++ -std=c++20 -march=native -Ofast -D SISTER src/driver.cpp -o bin/sister
+
+caster_tri: dir
+	g++ -std=c++20 -march=native -Ofast -D CASTER_TRI src/driver.cpp -o bin/caster_tri
 
 doc: all
 	mkdir -p doc
