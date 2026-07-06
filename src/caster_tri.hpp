@@ -41,7 +41,8 @@ ChangeLog logColor("Color",
 	"2026-02-02", "Chao Zhang", "Supporting quadripartiton", "minor",
 	"2026-06-12", "Zuizhi Chen", "CASTER_TRI: only score quartets containing reference species", "minor",
 	"2026-06-15", "Zuizhi Chen", "CASTER_TRI: adapt to TAXON_ORDER_PRIORITIZING interface", "minor",
-	"2026-06-16", "Zuizhi Chen", "CASTER_TRI: refactor scoring to direct calculation with refCnt/refColor", "minor");
+	"2026-06-16", "Zuizhi Chen", "CASTER_TRI: refactor scoring to direct calculation with refCnt/refColor", "minor",
+	"2026-07-06", "Zuizhi Chen", "CASTER_TRI: fix segfault when N_ref >= 5 (missing refColor guard in scoring)", "patch");
 
 template<STEPWISE_COLOR_ATTRIBUTES Attributes> class Color{
 	using cnt_taxon_t = Attributes::cnt_taxon_t;
@@ -217,6 +218,7 @@ public:
 		for (index_t iPos : iota((index_t)0, nPos)){
 			index_t gPos = iGenomePosBegin + iPos;
 			size_t C = refColor[gPos];
+			if (C == (size_t)-1) continue; //ref of iPos is not set, skip this position
 			array<array<cnt_t, 4>, 4> c = colorCnts[gPos];
 			if (C != 0) std::swap(c[0], c[C]);
 			res += scorePos(c, refCnt[gPos], element.eqFreqs);
@@ -234,6 +236,7 @@ public:
 		for (index_t iPos : iota((index_t)0, nPos)) {
 			index_t gPos = iGenomePosBegin + iPos;
 			size_t C = refColor[gPos];
+			if (C == (size_t)-1) continue; //ref of iPos is not set, skip this position
 			array<array<cnt_t, 4>, 4> c = colorCnts[gPos];
 			c[C] = refCnt[gPos];
 			array<score_t, 3> part = quadPos(c, element.eqFreqs);
