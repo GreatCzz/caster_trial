@@ -207,6 +207,7 @@ public:
 	
 	//Tripartition score: scorePos with ref in virtual color 0;
 	score_t elementScore(size_t iElement) const noexcept{
+		if (refColor[sharedConstData.elements[iElement].iGenomePosBegin] == (size_t)-1) return 0;
 		index_t iGenomePosBegin = sharedConstData.elements[iElement].iGenomePosBegin;
 		index_t nPos = sharedConstData.elements[iElement].nPos;
 		typename SharedConstData::Element const& element = sharedConstData.elements[iElement];
@@ -225,6 +226,7 @@ public:
 
 	//Edge NNI score
 	array<score_t, 3> elementQuadripartitionScores(size_t iElement) const noexcept {
+		if (refColor[sharedConstData.elements[iElement].iGenomePosBegin] == (size_t)-1) return {0, 0, 0};
 		index_t iGenomePosBegin = sharedConstData.elements[iElement].iGenomePosBegin;
 		index_t nPos = sharedConstData.elements[iElement].nPos;
 		typename SharedConstData::Element const& element = sharedConstData.elements[iElement];

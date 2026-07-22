@@ -210,6 +210,7 @@ public:
 	
 	//Tripartition score: scorePos with ref in virtual color 0;
 	score_t elementScore(size_t iElement) const noexcept{
+		if (refColor[sharedConstData.elements[iElement].iGenomePosBegin] == (size_t)-1) return 0;
 		index_t iGenomePosBegin = sharedConstData.elements[iElement].iGenomePosBegin;
 		index_t nPos = sharedConstData.elements[iElement].nPos;
 		typename SharedConstData::Element const& element = sharedConstData.elements[iElement];
@@ -218,7 +219,7 @@ public:
 		for (index_t iPos : iota((index_t)0, nPos)){
 			index_t gPos = iGenomePosBegin + iPos;
 			size_t C = refColor[gPos];
-			if (C == (size_t)-1) continue; //ref of iPos is not set, skip this position
+			if (C == (size_t)-1) continue;
 			array<array<cnt_t, 4>, 4> c = colorCnts[gPos];
 			if (C != 0) std::swap(c[0], c[C]);
 			res += scorePos(c, refCnt[gPos], element.eqFreqs);
@@ -228,6 +229,7 @@ public:
 
 	//Edge NNI score
 	array<score_t, 3> elementQuadripartitionScores(size_t iElement) const noexcept {
+		if (refColor[sharedConstData.elements[iElement].iGenomePosBegin] == (size_t)-1) return {0, 0, 0};
 		index_t iGenomePosBegin = sharedConstData.elements[iElement].iGenomePosBegin;
 		index_t nPos = sharedConstData.elements[iElement].nPos;
 		typename SharedConstData::Element const& element = sharedConstData.elements[iElement];
@@ -236,7 +238,7 @@ public:
 		for (index_t iPos : iota((index_t)0, nPos)) {
 			index_t gPos = iGenomePosBegin + iPos;
 			size_t C = refColor[gPos];
-			if (C == (size_t)-1) continue; //ref of iPos is not set, skip this position
+			if (C == (size_t)-1) continue;
 			array<array<cnt_t, 4>, 4> c = colorCnts[gPos];
 			c[C] = refCnt[gPos];
 			array<score_t, 3> part = quadPos(c, element.eqFreqs);
