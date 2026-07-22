@@ -2,6 +2,10 @@
 #include "optimization_algorithm.hpp"
 #include "quadripartition_support.hpp"
 
+#ifdef WEIGHTED_TRIAL
+#include "weighted_trial.hpp"
+namespace my_tool = weighted_trial;
+#else
 #ifdef CASTER_TRI
 #include "caster_tri.hpp"
 namespace my_tool = caster_tri;
@@ -20,6 +24,7 @@ namespace my_tool = sister;
 #else
 #include "astral.hpp"
 namespace my_tool = astral;
+#endif
 #endif
 #endif
 #endif
