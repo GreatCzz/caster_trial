@@ -1,0 +1,53 @@
+			for (size_t iChunk : iota((size_t) 0, nChunk)) {
+				typename DataClass::Element &element = sharedConstData.elements[iElementBegin + iChunk];
+				element.taxon2row[iTaxon] = iRow;
+				for (size_t iPos : iota((size_t) 0, sites[iChunk].size())) {
+					switch (seq[sites[iChunk][iPos]]) {
+						case 'A': element.cnts[iRow][iPos][0] += w; break;
+						case 'C': element.cnts[iRow][iPos][1] += w; break;
+						case 'G': element.cnts[iRow][iPos][2] += w; break;
+						case 'T': element.cnts[iRow][iPos][3] += w; break;
+					}
+				}
+			}
+			
+存double 开销太大了，还是使用整数对碱基记数进行储存，每个element中需要储存一个权重向量
+
+	inline static cnt4_t XXYY(cnt4_t xR, cnt4_t x0, cnt4_t x1, cnt4_t x2, cnt4_t yR, cnt4_t y0, cnt4_t y1, cnt4_t y2) noexcept{
+		return xR * x0 * y1 * y2 * 2 + yR * y0 * x1 * x2 * 2 +
+		       xR * (xR - 1) * y1 * y2 + yR * (yR - 1) * x1 * x2 +
+		       xR * x1 * y2 * (y2 - 1) + yR * y1 * x2 * (x2 - 1) +
+		       xR * x2 * y1 * (y1 - 1) + yR * y2 * x1 * (x1 - 1);
+	}
+
+逻辑错误，在赋权之后不能再通过y2 * (y2 - 1)的方式计算得分，需要在elementSetOrClearTaxonColor函数中对从一个颜色中取两片叶子的权重进行维护。
+
+将colorCnts改成colorWeight，将一个颜色中所有叶子对的权重和称为colorPairWeight（有更好的名字吗，帮我取一个）
+
+颜色添加物种时(注意计算顺序)
+对应碱基colorWeight += 碱基数 * 物种权重
+对应碱基colorPairWeight += (colorWeight - (碱基数 * 物种权重)) * (碱基数 * 物种权重)
+
+颜色去除物种时(注意计算顺序)
+对应碱基colorWeight -= 碱基数 * 物种权重
+对应碱基colorPairWeight -= colorWeight * (碱基数 * 物种权重)
+
+	inline static cnt4_t XXYY(cnt4_t xR, cnt4_t x0, cnt4_t x1, cnt4_t x2, cnt4_t yR, cnt4_t y0, cnt4_t y1, cnt4_t y2) noexcept{
+		return xR * x0 * y1 * y2 * 2 + yR * y0 * x1 * x2 * 2 +
+		       xR * (xR - 1) * y1 * y2 + yR * (yR - 1) * x1 * x2 +
+		       xR * x1 * y2 * (y2 - 1) + yR * y1 * x2 * (x2 - 1) +
+		       xR * x2 * y1 * (y1 - 1) + yR * y2 * x1 * (x1 - 1);
+	}
+	
+	应该变为下面这样
+	
+	inline static cnt4_t XXYY(cnt4_t xR, cnt4_t x0, cnt4_t x1, cnt4_t x2, cnt4_t yR, cnt4_t y0, cnt4_t y1, cnt4_t y2, cnt4_t x11, cnt4_t x22, cnt4_t y11, cnt4_t y22,) noexcept{
+		return xR * x0 * y1 * y2 * 2 + yR * y0 * x1 * x2 * 2 +
+		       xR * (xR - 1) * y1 * y2 + yR * (yR - 1) * x1 * x2 +
+		       xR * x1 * y22 * 2 + yR * y1 * x22 * 2 +
+		       xR * x2 * y11 * 2 + yR * y2 * x11 * 2;
+	}
+	
+用于减少开支的几种模板需要加回来
+由于单位点碱基还是使用整形，cnt_taxon_t保留，可以在模板种设不同类型进行优化
+cnt_t和cnt4_t改为weight_t，weight_t = double 无法进行优化选择，你估计一下，double能覆盖原先cnt4_t吗，会不会位数不够

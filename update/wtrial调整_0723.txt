@@ -1,0 +1,121 @@
+using weight_t = double;
+
+template<class Attributes> concept STEPWISE_COLOR_ATTRIBUTES = requires
+{
+    requires std::integral<typename Attributes::score_t> || std::floating_point<typename Attributes::score_t>;
+	requires std::integral<typename Attributes::cnt_t> || std::floating_point<typename Attributes::cnt_t>;
+	requires std::integral<typename Attributes::cnt4_t> || std::floating_point<typename Attributes::cnt4_t>;
+	requires std::integral<typename Attributes::index_t>;
+	{ Attributes::ZERO } -> std::convertible_to<typename Attributes::score_t>;
+	{ Attributes::EPSILON } -> std::convertible_to<typename Attributes::score_t>;
+};
+
+weight_t可以放到requires中。cnt_t和cnt4_t应该可以移除了
+
+	inline static array<score_t, 3> quadPos(array<array<cnt_t, 4>, 4> const& cnt, array<score_t, 4> const& pi) noexcept {
+		return {quadPosSingle(cnt[0], cnt[1], cnt[2], cnt[3], pi),
+		        quadPosSingle(cnt[0], cnt[2], cnt[1], cnt[3], pi),
+		        quadPosSingle(cnt[0], cnt[3], cnt[1], cnt[2], pi)};
+	}
+
+	// WTRIAL: weight_t version for quadPos
+	inline static array<score_t, 3> quadPos(array<array<weight_t, 4>, 4> const& cnt, array<score_t, 4> const& pi) noexcept {
+		return {quadPosSingle(cnt[0], cnt[1], cnt[2], cnt[3], pi),
+		        quadPosSingle(cnt[0], cnt[2], cnt[1], cnt[3], pi),
+		        quadPosSingle(cnt[0], cnt[3], cnt[1], cnt[2], pi)};
+	}
+	
+为什么这里有两个看上去很像的东西
+
+if (std::same_as<cnt_taxon_t, bool> && maxSpeciesman >= 2) {
+				log.log() << "Seems there is more than one haploid genome per taxon and thus bool type cannot be used..." << std::endl;
+				throw(std::logic_error("Incompatible data structure"));
+			}
+			if (std::same_as<cnt_taxon_t, unsigned char> && maxSpeciesman >= 256) {
+				log.log() << "Seems there are more than 255 haploid genomes per taxon (which is fishy) and thus unsigned char type cannot be used..." << std::endl;
+				throw(std::logic_error("Incompatible data structure"));
+			}
+			if (std::same_as<cnt_taxon_t, unsigned short> && maxSpeciesman >= 65536) {
+				common::LogInfo err(-100);
+				err.log() << "Seems there are more than 65535 haploid genomes per taxon (which is astonishing)! Please ask the author for a specially made version..." << std::endl;
+				exit(-1);
+			}
+			if (std::same_as<cnt_t, unsigned char> && nTotalSpeciesmen >= 256) {
+				log.log() << "Seems there are more than 255 haploid genomes in total and thus unsigned char type cannot be used..." << std::endl;
+				throw(std::logic_error("Incompatible data structure"));
+			}
+			if (std::same_as<cnt_t, unsigned short> && nTotalSpeciesmen >= 65536) {
+				common::LogInfo err(-100);
+				err.log() << "Seems there are more than 65535 haploid genomes in total (which is fishy)! Please ask the author for a specially made version..." << std::endl;
+				exit(-1);
+			}
+			
+这里只需要对cnt_taxon进行分类，cnt_t已经被weight_t代替了，且固定为double，不需要分类
+
+// WTRIAL: weight_t overloads for elementQuadripartitionScores
+	static score_t quadPosSingle(array<weight_t, 4> const& cnt0, array<weight_t, 4> const& cnt1,
+		array<weight_t, 4> const& cnt2, array<weight_t, 4> const& cnt3, array<score_t, 4> const& pi) noexcept {
+
+		score_t const A = pi[0], Ci = pi[1], G = pi[2], T = pi[3];
+		score_t const R = A + G, Y = Ci + T, R2 = A * A + G * G, Y2 = Ci * Ci + T * T;
+		weight_t const a0 = cnt0[0], c0 = cnt0[1], g0 = cnt0[2], t0 = cnt0[3], r0 = a0 + g0, y0 = c0 + t0;
+		weight_t const a1 = cnt1[0], c1 = cnt1[1], g1 = cnt1[2], t1 = cnt1[3], r1 = a1 + g1, y1 = c1 + t1;
+		weight_t const a2 = cnt2[0], c2 = cnt2[1], g2 = cnt2[2], t2 = cnt2[3], r2 = a2 + g2, y2 = c2 + t2;
+		weight_t const a3 = cnt3[0], c3 = cnt3[1], g3 = cnt3[2], t3 = cnt3[3], r3 = a3 + g3, y3 = c3 + t3;
+
+		weight_t const rryy = quadXXYY(r0, r1, r2, r3, y0, y1, y2, y3);
+		weight_t const aayy = quadXXYY(a0, a1, a2, a3, y0, y1, y2, y3);
+		weight_t const ggyy = quadXXYY(g0, g1, g2, g3, y0, y1, y2, y3);
+		weight_t const rrcc = quadXXYY(r0, r1, r2, r3, c0, c1, c2, c3);
+		weight_t const rrtt = quadXXYY(r0, r1, r2, r3, t0, t1, t2, t3);
+		weight_t const aacc = quadXXYY(a0, a1, a2, a3, c0, c1, c2, c3);
+		weight_t const aatt = quadXXYY(a0, a1, a2, a3, t0, t1, t2, t3);
+		weight_t const ggcc = quadXXYY(g0, g1, g2, g3, c0, c1, c2, c3);
+		weight_t const ggtt = quadXXYY(g0, g1, g2, g3, t0, t1, t2, t3);
+
+		return (score_t)(rryy * R2 * Y2 - (aayy + ggyy) * (R * R) * Y2 - (rrcc + rrtt) * R2 * (Y * Y)
+			+ (aacc + aatt + ggcc + ggtt) * (R * R) * (Y * Y));
+	}
+
+	static score_t quadPosSingle(array<cnt_t, 4> const& cnt0, array<cnt_t, 4> const& cnt1,
+		array<cnt_t, 4> const& cnt2, array<cnt_t, 4> const& cnt3, array<score_t, 4> const& pi) noexcept {
+
+		score_t const A = pi[0], Ci = pi[1], G = pi[2], T = pi[3];
+		score_t const R = A + G, Y = Ci + T, R2 = A * A + G * G, Y2 = Ci * Ci + T * T;
+		weight_t const a0 = cnt0[0], c0 = cnt0[1], g0 = cnt0[2], t0 = cnt0[3], r0 = a0 + g0, y0 = c0 + t0;
+		weight_t const a1 = cnt1[0], c1 = cnt1[1], g1 = cnt1[2], t1 = cnt1[3], r1 = a1 + g1, y1 = c1 + t1;
+		weight_t const a2 = cnt2[0], c2 = cnt2[1], g2 = cnt2[2], t2 = cnt2[3], r2 = a2 + g2, y2 = c2 + t2;
+		weight_t const a3 = cnt3[0], c3 = cnt3[1], g3 = cnt3[2], t3 = cnt3[3], r3 = a3 + g3, y3 = c3 + t3;
+
+		cnt4_t const rryy = quadXXYY(r0, r1, r2, r3, y0, y1, y2, y3);
+
+		cnt4_t const aayy = quadXXYY(a0, a1, a2, a3, y0, y1, y2, y3);
+		cnt4_t const ggyy = quadXXYY(g0, g1, g2, g3, y0, y1, y2, y3);
+		cnt4_t const rrcc = quadXXYY(r0, r1, r2, r3, c0, c1, c2, c3);
+		cnt4_t const rrtt = quadXXYY(r0, r1, r2, r3, t0, t1, t2, t3);
+
+		cnt4_t const aacc = quadXXYY(a0, a1, a2, a3, c0, c1, c2, c3);
+		cnt4_t const aatt = quadXXYY(a0, a1, a2, a3, t0, t1, t2, t3);
+		cnt4_t const ggcc = quadXXYY(g0, g1, g2, g3, c0, c1, c2, c3);
+		cnt4_t const ggtt = quadXXYY(g0, g1, g2, g3, t0, t1, t2, t3);
+
+		return rryy * R2 * Y2 - (aayy + ggyy) * (R * R) * Y2 - (rrcc + rrtt) * R2 * (Y * Y)
+			+ (aacc + aatt + ggcc + ggtt) * (R * R) * (Y * Y);
+	}
+	
+为什么这个也有两套
+
+auto pw = [&](int col, int n1, int n2) -> weight_t {
+			if (n1 == n2) return cp[col][n1];
+			return cp[col][n1] + cp[col][n2] + cw[col][n1] * cw[col][n2];
+		};
+
+		//R = A + G, Y = C + T
+		weight_t const r11 = pw(1,0,2), r22 = pw(2,0,2);  // purine pairs
+		weight_t const y11 = pw(1,1,3), y22 = pw(2,1,3);  // pyrimidine pairs
+		weight_t const a11 = pw(1,0,0), a22 = pw(2,0,0);  // A pairs
+		weight_t const g11 = pw(1,2,2), g22 = pw(2,2,2);  // G pairs
+		weight_t const c11 = pw(1,1,1), c22 = pw(2,1,1);  // C pairs
+		weight_t const t11 = pw(1,3,3), t22 = pw(2,3,3);  // T pairs
+		
+这里agct改为直接读取，ry再通过pw计算，是否能减少运算开支

@@ -1,0 +1,156 @@
+# weighted_trial (wtrial) 实现计划
+
+## 编译目标
+- 文件名: `src/weighted_trial.hpp`
+- 命名空间: `weighted_trial`
+- 程序名: `wtrial`
+- 全名: `Weighted CASTER-TRI`
+- 二进制: `bin/wtrial`
+
+## 权重计算公式
+
+```
+similarity = 1 - hammingDist / nonGapLen
+
+weight = 0                                     (sim < 0.25)
+       = (sim - 0.25) / 0.75                  (sim ∈ [0.25, 1])
+       = (0.75 - hammingDist/nonGapLen) / 0.75
+       = 1 - hammingDist/(0.75 * nonGapLen)
+
+ref 权重 = 1.0
+```
+
+## 文件改动清单
+
+### 1. `src/weighted_trial.hpp` — 从 `caster_tri.hpp` 复制后修改
+
+#### a) 基础标识
+```
+Guard:         WEIGHTED_TRIAL_HPP
+Namespace:     weighted_trial
+程序名:        wtrial
+```
+
+#### b) StepwiseColorDefaultAttributes — 删模板参数，固定 double
+```
+struct StepwiseColorDefaultAttributes {
+    using score_t     = double;
+    using cnt_taxon_t = double;   // 原来是 bool/uchar/ushort 模板参数
+    using cnt_t       = double;   // 原来是 uchar/ushort 模板参数
+    using cnt4_t      = double;   // 原来是 conditional<uchar, uint, ull>
+    using index_t     = long long;
+    static inline score_t constexpr ZERO = 0;
+    static inline score_t constexpr EPSILON = 1e-3;
+};
+```
+
+#### c) Driver::DataClasses — 只有 1 个变体
+```
+using DataClasses = std::variant<typename Color<StepwiseColorDefaultAttributes>::SharedConstData>;
+```
+
+#### d) Driver::getStepwiseColorSharedConstData() — 无需 try-catch 回退
+```
+static DataClasses getStepwiseColorSharedConstData() noexcept {
+    return DriverHelper::read<std::variant_alternative_t<0, DataClasses>>();
+}
+```
+
+#### e) DriverHelper::read() — 核心改动
+
+**第一遍扫描 (AP) — 只多存一条 refSeq（~1MB）：**
+
+```
+string refSeq;  // 仅存 ref 序列，其他序列不存
+
+while (AP.nextAlignment()) {
+    ...
+    while (AP.nextSeq()) {
+        size_t iTaxon = common::taxonName2ID[AP.getName()];
+        string seq = AP.getSeq();
+
+        // 新增：遇到 ref 物种时保存序列（每条 alignment 只存一次）
+        if (iTaxon == fileRefTaxonId && refSeq.empty())
+            refSeq = seq;
+
+        // 原有：freq 统计不变
+        for (i in seq) { freq[i][nucl]++; }
+    }
+    // 原有：分块、eqfreq、构建 element 外壳不变
+}
+```
+
+**第二遍扫描 (AP2) — 在填充 cnts 时计算权重并乘入：**
+
+```
+AP2.nextAlignment();
+// 构建 element（同原有逻辑）
+
+while (AP2.nextSeq()) {
+    size_t iTaxon = common::taxonName2ID[AP2.getName()];
+    size_t iRow = taxon2row[iTaxon];
+    string seq = AP2.getSeq();
+
+    // 新增：计算该物种对 ref 的权重
+    double w = 1.0;
+    if (iTaxon != fileRefTaxonId && !refSeq.empty()) {
+        size_t hamming = 0, nonGap = 0;
+        for (i in 0..min(refSeq.size(), seq.size())) {
+            if (refSeq[i]=='-' || seq[i]=='-') continue;
+            nonGap++;
+            if (refSeq[i] != seq[i]) hamming++;
+        }
+        double sim = (nonGap > 0) ? 1.0 - (double)hamming / nonGap : 0.0;
+        w = (sim < 0.25) ? 0.0 : (sim - 0.25) / 0.75;
+    }
+
+    // 改动：cnts 填充用 w 替代 1
+    for (chunk) {
+        for (iPos in sites[chunk]) {
+            switch (seq[sites[chunk][iPos]]) {
+                case 'A': element.cnts[iRow][iPos][0] += w;  // 原来是 += 1
+                case 'C': element.cnts[iRow][iPos][1] += w;
+                case 'G': element.cnts[iRow][iPos][2] += w;
+                case 'T': element.cnts[iRow][iPos][3] += w;
+            }
+        }
+    }
+}
+```
+
+**内存开销**：仅一条 refSeq 字符串，约 1MB/alignment，不随物种数增长。
+
+#### f) Color 类的 scoring 逻辑 — 不变
+`XXYY`、`quadXXYY`、`scorePos`、`quadPos` 模板自动适配 `cnt4_t = double`
+
+#### g) Documentation — 更新
+```
+programName(): "wtrial"
+简名: wtrial  全名: Weighted Trial
+introduction()、input() 更新权重说明
+```
+
+### 2. `src/driver.cpp` — 加编译分支
+```
+#ifdef WEIGHTED_TRIAL
+#include "weighted_trial.hpp"
+namespace my_tool = weighted_trial;
+#else
+...
+```
+
+### 3. `makefile` — 加编译目标
+```
+wtrial: dir
+    g++ -std=c++20 -march=native -Ofast -D WEIGHTED_TRIAL src/driver.cpp -o bin/wtrial
+```
+
+## 影响面
+- `weighted_trial.hpp`: 新增文件，约 550 行
+- `driver.cpp`: +3 行
+- `makefile`: +3 行
+- 不修改 `caster_tri.hpp` 和 `caster_tri`
+
+## 测试计划
+- 与 `caster_tri` 相同输入，权重=1 时（相似度 100%），wtrial 输出应与 caster_tri 相同
+- 权重=0 的物种不贡献分数，树中使用仅含参考物种的 quartet 进行推断
