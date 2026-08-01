@@ -1,4 +1,4 @@
-all: astral caster sister caster_tri wtrial
+all: astral caster sister caster_tri wtrial chunk_wtrial
 
 dir:
 	g++ -v 2>&1 | tail -n 1
@@ -19,6 +19,9 @@ caster_tri: dir
 
 wtrial: dir
 	g++ -std=c++20 -march=native -Ofast -D WEIGHTED_TRIAL src/driver.cpp -o bin/wtrial
+
+chunk_wtrial: dir
+	g++ -std=c++20 -march=native -Ofast -D CHUNK_WEIGHTED_TRIAL src/driver.cpp -o bin/chunk_wtrial
 
 doc: all
 	mkdir -p doc

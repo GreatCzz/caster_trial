@@ -2,6 +2,10 @@
 #include "optimization_algorithm.hpp"
 #include "quadripartition_support.hpp"
 
+#ifdef CHUNK_WEIGHTED_TRIAL
+#include "chunk_weighted_trial.hpp"
+namespace my_tool = chunk_weighted_trial;
+#else
 #ifdef WEIGHTED_TRIAL
 #include "weighted_trial.hpp"
 namespace my_tool = weighted_trial;
@@ -24,6 +28,7 @@ namespace my_tool = sister;
 #else
 #include "astral.hpp"
 namespace my_tool = astral;
+#endif
 #endif
 #endif
 #endif
