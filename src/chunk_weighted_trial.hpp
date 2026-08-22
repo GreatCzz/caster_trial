@@ -463,11 +463,12 @@ template<typename DataClass> DataClass read() {
 			size_t iRow = taxon2row[iTaxon];
 			string seq = AP2.getSeq();
 
-			// WTRIAL: per-chunk weight (Hamming distance to ref on effective sites only)
+			// WTRIAL: per-chunk weight (Hamming distance to ref on ALL sites in the chunk, not just diverse sites)
 			if (iTaxon != fileRefTaxonId && !refSeq.empty()) {
 				for (size_t iChunk : iota((size_t) 0, nChunk)) {
+					size_t s = iChunk * nSites / nChunk, t = (iChunk + 1) * nSites / nChunk;
 					size_t hamming = 0, nonGap = 0;
-					for (size_t iPos : sites[iChunk]) {
+					for (size_t iPos = s; iPos < t; iPos++) {
 						if (refSeq[iPos] == '-' || seq[iPos] == '-') continue;
 						nonGap++;
 						if (refSeq[iPos] != seq[iPos]) hamming++;

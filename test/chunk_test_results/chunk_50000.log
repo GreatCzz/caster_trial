@@ -1,0 +1,244 @@
+Chunk-Weighted Trial: per-element sequence-similarity weighting v2.4.0 (2026-07-06)
+bin/chunk_wtrial --input example/cat/fasta2ref.txt --output test/chunk_test_results/chunk_50000.tre --thread 4 --initial-round 4 --subsequent-round 2 --root Canis_lupus_familiaris --subsample-min 5000 --chunk 50000 --log test/chunk_test_results/chunk_50000.log --log-verbose 5 --verbose 4
+- Parsing input file(s)...
+ - Parsing fasta2ref file and reading input...
+ - #Reference species (distinct): 1
+ -   Felis_catus
+ - #Fasta files: 1
+  - Processing example/cat/test_full.fasta ... 
+   - Processing example/cat/test_full.fasta ... 
+- #Taxa: 10
+- #Elements: 1178
+- #Threads: 4
+- #Initial-rounds: 4
+- #Subsequent-rounds: 2
+- Time after parsing input: 0 minute(s)
+- Optimiziation algorithm starts...
+ - Running subsample procedure...
+  - #Rounds: 4
+  - #Threads: 4
+   - Prioritizing taxa ...
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Running recursive placement (RP) procedure...
+  - Recursive placement...
+    - Current tree: ((Felis_catus,Prionailurus_bengalensis),Leopardus_geoffroyi);
+   - Placing 4-th taxon (Otocolobus_manul)
+    - Current tree: ((Felis_catus,(Prionailurus_bengalensis,Otocolobus_manul)),Leopardus_geoffroyi);
+   - Placing 5-th taxon (Lynx_canadensis)
+    - Current tree: ((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Leopardus_geoffroyi),Lynx_canadensis);
+   - Placing 6-th taxon (Caracal_caracal)
+    - Current tree: ((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),(Leopardus_geoffroyi,Caracal_caracal)),Lynx_canadensis);
+   - Placing 7-th taxon (Canis_lupus_familiaris)
+    - Current tree: ((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),((Leopardus_geoffroyi,Canis_lupus_familiaris),Caracal_caracal)),Lynx_canadensis);
+   - Placing 8-th taxon (Acinonyx_jubatus)
+    - Current tree: ((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),(((Leopardus_geoffroyi,Canis_lupus_familiaris),Caracal_caracal),Acinonyx_jubatus)),Lynx_canadensis);
+   - Placing 9-th taxon (Suricata_suricatta)
+    - Current tree: (((((Leopardus_geoffroyi,(Canis_lupus_familiaris,Suricata_suricatta)),Caracal_caracal),Acinonyx_jubatus),((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus)),Lynx_canadensis);
+   - Placing 10-th taxon (Panthera_tigris)
+   - Recursively placed tree: (((((((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris),Leopardus_geoffroyi),Caracal_caracal),Acinonyx_jubatus),((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus)),Lynx_canadensis);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200182
+   - (((((((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris),Leopardus_geoffroyi),Caracal_caracal),Acinonyx_jubatus),((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus)),Lynx_canadensis);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Performing NNI search...
+   - (((((((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus)),Lynx_canadensis);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200326
+   - (((((((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus)),Lynx_canadensis);
+   - Prioritizing taxa ...
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Running recursive placement (RP) procedure...
+  - Recursive placement...
+    - Current tree: ((Felis_catus,Panthera_tigris),Otocolobus_manul);
+   - Placing 4-th taxon (Leopardus_geoffroyi)
+    - Current tree: ((Felis_catus,(Panthera_tigris,Leopardus_geoffroyi)),Otocolobus_manul);
+   - Placing 5-th taxon (Prionailurus_bengalensis)
+    - Current tree: ((((Panthera_tigris,Leopardus_geoffroyi),Felis_catus),Prionailurus_bengalensis),Otocolobus_manul);
+   - Placing 6-th taxon (Suricata_suricatta)
+    - Current tree: (((((Panthera_tigris,Suricata_suricatta),Leopardus_geoffroyi),Felis_catus),Prionailurus_bengalensis),Otocolobus_manul);
+   - Placing 7-th taxon (Acinonyx_jubatus)
+    - Current tree: ((((((Panthera_tigris,Suricata_suricatta),Leopardus_geoffroyi),Acinonyx_jubatus),Felis_catus),Prionailurus_bengalensis),Otocolobus_manul);
+   - Placing 8-th taxon (Caracal_caracal)
+    - Current tree: (((((((Panthera_tigris,Suricata_suricatta),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),Felis_catus),Prionailurus_bengalensis),Otocolobus_manul);
+   - Placing 9-th taxon (Canis_lupus_familiaris)
+    - Current tree: (((((((Panthera_tigris,(Suricata_suricatta,Canis_lupus_familiaris)),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),Felis_catus),Prionailurus_bengalensis),Otocolobus_manul);
+   - Placing 10-th taxon (Lynx_canadensis)
+   - Recursively placed tree: (((((((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),Lynx_canadensis),Felis_catus),Prionailurus_bengalensis),Otocolobus_manul);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200326
+   - (((((((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),Lynx_canadensis),Felis_catus),Prionailurus_bengalensis),Otocolobus_manul);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Performing NNI search...
+   - (((((((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),Lynx_canadensis),Felis_catus),Prionailurus_bengalensis),Otocolobus_manul);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200326
+   - (((((((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),Lynx_canadensis),Felis_catus),Prionailurus_bengalensis),Otocolobus_manul);
+   - Prioritizing taxa ...
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Running recursive placement (RP) procedure...
+  - Recursive placement...
+    - Current tree: ((Felis_catus,Acinonyx_jubatus),Caracal_caracal);
+   - Placing 4-th taxon (Panthera_tigris)
+    - Current tree: (((Felis_catus,Acinonyx_jubatus),Caracal_caracal),Panthera_tigris);
+   - Placing 5-th taxon (Otocolobus_manul)
+    - Current tree: ((((Felis_catus,Otocolobus_manul),Acinonyx_jubatus),Caracal_caracal),Panthera_tigris);
+   - Placing 6-th taxon (Prionailurus_bengalensis)
+    - Current tree: ((((Felis_catus,(Otocolobus_manul,Prionailurus_bengalensis)),Acinonyx_jubatus),Caracal_caracal),Panthera_tigris);
+   - Placing 7-th taxon (Canis_lupus_familiaris)
+    - Current tree: (((((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus),Acinonyx_jubatus),Caracal_caracal),(Panthera_tigris,Canis_lupus_familiaris));
+   - Placing 8-th taxon (Leopardus_geoffroyi)
+    - Current tree: ((((((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),(Panthera_tigris,Canis_lupus_familiaris));
+   - Placing 9-th taxon (Suricata_suricatta)
+    - Current tree: ((((((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),(Panthera_tigris,(Canis_lupus_familiaris,Suricata_suricatta)));
+   - Placing 10-th taxon (Lynx_canadensis)
+   - Recursively placed tree: (((((((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris));
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200326
+   - (((((((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris));
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Performing NNI search...
+   - (((((((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris));
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200326
+   - (((((((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris));
+   - Prioritizing taxa ...
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Running recursive placement (RP) procedure...
+  - Recursive placement...
+    - Current tree: ((Felis_catus,Acinonyx_jubatus),Canis_lupus_familiaris);
+   - Placing 4-th taxon (Lynx_canadensis)
+    - Current tree: (((Felis_catus,Lynx_canadensis),Acinonyx_jubatus),Canis_lupus_familiaris);
+   - Placing 5-th taxon (Leopardus_geoffroyi)
+    - Current tree: ((((Felis_catus,Lynx_canadensis),Acinonyx_jubatus),Canis_lupus_familiaris),Leopardus_geoffroyi);
+   - Placing 6-th taxon (Caracal_caracal)
+    - Current tree: (((((Felis_catus,Lynx_canadensis),Acinonyx_jubatus),Caracal_caracal),Canis_lupus_familiaris),Leopardus_geoffroyi);
+   - Placing 7-th taxon (Prionailurus_bengalensis)
+    - Current tree: ((((((Felis_catus,Prionailurus_bengalensis),Lynx_canadensis),Acinonyx_jubatus),Caracal_caracal),Canis_lupus_familiaris),Leopardus_geoffroyi);
+   - Placing 8-th taxon (Panthera_tigris)
+    - Current tree: ((((((Felis_catus,Prionailurus_bengalensis),Lynx_canadensis),Acinonyx_jubatus),Caracal_caracal),(Canis_lupus_familiaris,Panthera_tigris)),Leopardus_geoffroyi);
+   - Placing 9-th taxon (Otocolobus_manul)
+    - Current tree: ((((((Felis_catus,(Prionailurus_bengalensis,Otocolobus_manul)),Lynx_canadensis),Acinonyx_jubatus),Caracal_caracal),(Canis_lupus_familiaris,Panthera_tigris)),Leopardus_geoffroyi);
+   - Placing 10-th taxon (Suricata_suricatta)
+   - Recursively placed tree: (((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Caracal_caracal),((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris)),Leopardus_geoffroyi);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200182
+   - (((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Caracal_caracal),((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris)),Leopardus_geoffroyi);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Performing NNI search...
+   - ((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),(((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris),Caracal_caracal)),Leopardus_geoffroyi);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200326
+   - ((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),(((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris),Caracal_caracal)),Leopardus_geoffroyi);
+ - Computing constrained dynamic programming tree (round 1)...
+  - Generating thread pool (TP) with 4 thread(s)...
+   - Covering data range [0,1178)
+ - Score: 200326
+  - (((((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),Panthera_tigris),Suricata_suricatta),Canis_lupus_familiaris);
+  - Generating thread pool (TP) with 4 thread(s)...
+   - Covering data range [0,1178)
+ - Performing NNI search...
+  - (((((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),Panthera_tigris),Suricata_suricatta),Canis_lupus_familiaris);
+  - Generating thread pool (TP) with 4 thread(s)...
+   - Covering data range [0,1178)
+ - Score: 200326
+  - (((((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),Panthera_tigris),Suricata_suricatta),Canis_lupus_familiaris);
+ - Running subsample procedure...
+  - #Rounds: 2
+  - #Threads: 4
+   - Prioritizing taxa ...
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Running recursive placement (RP) procedure...
+  - Recursive placement...
+    - Current tree: ((Felis_catus,Suricata_suricatta),Lynx_canadensis);
+   - Placing 4-th taxon (Otocolobus_manul)
+    - Current tree: (((Felis_catus,Otocolobus_manul),Suricata_suricatta),Lynx_canadensis);
+   - Placing 5-th taxon (Canis_lupus_familiaris)
+    - Current tree: (((Felis_catus,Otocolobus_manul),(Suricata_suricatta,Canis_lupus_familiaris)),Lynx_canadensis);
+   - Placing 6-th taxon (Panthera_tigris)
+    - Current tree: (((Felis_catus,Otocolobus_manul),((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris)),Lynx_canadensis);
+   - Placing 7-th taxon (Prionailurus_bengalensis)
+    - Current tree: ((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),(Felis_catus,(Otocolobus_manul,Prionailurus_bengalensis))),Lynx_canadensis);
+   - Placing 8-th taxon (Caracal_caracal)
+    - Current tree: (((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),Caracal_caracal),((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus)),Lynx_canadensis);
+   - Placing 9-th taxon (Acinonyx_jubatus)
+    - Current tree: ((((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),Caracal_caracal),Acinonyx_jubatus),((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus)),Lynx_canadensis);
+   - Placing 10-th taxon (Leopardus_geoffroyi)
+   - Recursively placed tree: (((((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus)),Lynx_canadensis);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200326
+   - (((((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus)),Lynx_canadensis);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Performing NNI search...
+   - (((((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus)),Lynx_canadensis);
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200326
+   - (((((((Suricata_suricatta,Canis_lupus_familiaris),Panthera_tigris),Caracal_caracal),Leopardus_geoffroyi),Acinonyx_jubatus),((Otocolobus_manul,Prionailurus_bengalensis),Felis_catus)),Lynx_canadensis);
+   - Prioritizing taxa ...
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Running recursive placement (RP) procedure...
+  - Recursive placement...
+    - Current tree: ((Felis_catus,Leopardus_geoffroyi),Canis_lupus_familiaris);
+   - Placing 4-th taxon (Prionailurus_bengalensis)
+    - Current tree: (((Felis_catus,Prionailurus_bengalensis),Leopardus_geoffroyi),Canis_lupus_familiaris);
+   - Placing 5-th taxon (Lynx_canadensis)
+    - Current tree: ((((Felis_catus,Prionailurus_bengalensis),Lynx_canadensis),Leopardus_geoffroyi),Canis_lupus_familiaris);
+   - Placing 6-th taxon (Otocolobus_manul)
+    - Current tree: ((((Felis_catus,(Prionailurus_bengalensis,Otocolobus_manul)),Lynx_canadensis),Leopardus_geoffroyi),Canis_lupus_familiaris);
+   - Placing 7-th taxon (Caracal_caracal)
+    - Current tree: ((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Caracal_caracal),Leopardus_geoffroyi),Canis_lupus_familiaris);
+   - Placing 8-th taxon (Panthera_tigris)
+    - Current tree: ((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Caracal_caracal),Leopardus_geoffroyi),(Canis_lupus_familiaris,Panthera_tigris));
+   - Placing 9-th taxon (Acinonyx_jubatus)
+    - Current tree: (((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Caracal_caracal),Leopardus_geoffroyi),(Canis_lupus_familiaris,Panthera_tigris));
+   - Placing 10-th taxon (Suricata_suricatta)
+   - Recursively placed tree: (((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Caracal_caracal),Leopardus_geoffroyi),((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris));
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200182
+   - (((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Caracal_caracal),Leopardus_geoffroyi),((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris));
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Performing NNI search...
+   - (((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris));
+   - Generating thread pool (TP) with 4 thread(s)...
+    - Covering data range [0,1178)
+  - Score: 200326
+   - (((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),((Canis_lupus_familiaris,Suricata_suricatta),Panthera_tigris));
+ - Computing constrained dynamic programming tree (round 2)...
+  - Generating thread pool (TP) with 4 thread(s)...
+   - Covering data range [0,1178)
+ - Score: 200326
+  - (((((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),Panthera_tigris),Suricata_suricatta),Canis_lupus_familiaris);
+  - Generating thread pool (TP) with 4 thread(s)...
+   - Covering data range [0,1178)
+ - Performing NNI search...
+  - (((((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),Panthera_tigris),Suricata_suricatta),Canis_lupus_familiaris);
+  - Generating thread pool (TP) with 4 thread(s)...
+   - Covering data range [0,1178)
+ - Score: 200326
+  - (((((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),Panthera_tigris),Suricata_suricatta),Canis_lupus_familiaris);
+- Final tree: (((((((((Prionailurus_bengalensis,Otocolobus_manul),Felis_catus),Lynx_canadensis),Acinonyx_jubatus),Leopardus_geoffroyi),Caracal_caracal),Panthera_tigris),Suricata_suricatta),Canis_lupus_familiaris);
+- Time after optimization: 0 minute(s)
+- Annotating Local Block Bootstrap ...
+- Time after support annotation: 0 minute(s)
