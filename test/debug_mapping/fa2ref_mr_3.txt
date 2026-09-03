@@ -1,0 +1,3 @@
+/home/agent/chenzz/project/paralogs_sim/r5/tests/data/100pct/rep_1/rep_1_ref_genome_1_100pct.fasta 1
+/home/agent/chenzz/project/paralogs_sim/r5/tests/data/100pct/rep_1/rep_1_ref_genome_2_100pct.fasta 2
+/home/agent/chenzz/project/paralogs_sim/r5/tests/data/100pct/rep_1/rep_1_ref_genome_3_100pct.fasta 3

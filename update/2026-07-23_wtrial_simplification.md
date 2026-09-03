@@ -1,8 +1,8 @@
-# wtrial 简化修改报告 — 2026-07-23
+# alignment_wtrial 简化修改报告 — 2026-07-23
 
 ## 改动概览
 
-`weighted_trial.hpp` 从 619 行缩减为 582 行（-37 行）。
+`alignment_wtrial.hpp` 从 619 行缩减为 582 行（-37 行）。
 
 ## 改动一：移除 `weight_t` 类型别名，统一使用 `cnt_t`
 
@@ -51,7 +51,7 @@ if (std::same_as<cnt_t, unsigned short> && nTotalSpeciesmen >= 65536) { exit; }
 
 删除了旧的 `quadPosSingle` 二重载（接受 `array<cnt_t,4>` 参数、内部使用 `cnt4_t` 类型）。保留接受 `cnt_t`（即 `double`）版本的 `quadPosSingle` 和 `quadPos`。
 
-**原因**：旧重载是 caster_tri.hpp 的残余，wtrial 只使用 double 版本。
+**原因**：旧重载是 trial.hpp 的残余，alignment_wtrial 只使用 double 版本。
 
 ## 改动六：简化 pair-weight 计算
 

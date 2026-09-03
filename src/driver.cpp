@@ -2,17 +2,17 @@
 #include "optimization_algorithm.hpp"
 #include "quadripartition_support.hpp"
 
-#ifdef CHUNK_WEIGHTED_TRIAL
-#include "chunk_weighted_trial.hpp"
-namespace my_tool = chunk_weighted_trial;
+#ifdef CHUNK_WTRIAL
+#include "chunk_wtrial.hpp"
+namespace my_tool = chunk_wtrial;
 #else
-#ifdef WEIGHTED_TRIAL
-#include "weighted_trial.hpp"
-namespace my_tool = weighted_trial;
+#ifdef ALIGNMENT_WTRIAL
+#include "alignment_wtrial.hpp"
+namespace my_tool = alignment_wtrial;
 #else
-#ifdef CASTER_TRI
-#include "caster_tri.hpp"
-namespace my_tool = caster_tri;
+#ifdef TRIAL
+#include "trial.hpp"
+namespace my_tool = trial;
 #else
 #ifdef CASTER
 #include "caster.hpp"

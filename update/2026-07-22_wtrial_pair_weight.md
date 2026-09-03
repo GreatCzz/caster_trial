@@ -1,8 +1,8 @@
-# wtrial Pair-Weight Refactoring (2026-07-22)
+# alignment_wtrial Pair-Weight Refactoring (2026-07-22)
 
 ## Mathematical problem
 
-The original wtrial replaced integer nucleotide counts with weighted doubles
+The original alignment_wtrial replaced integer nucleotide counts with weighted doubles
 (`cnts += weight`) and passed them directly into XXYY.  The XXYY formula
 contains terms like `y2 * (y2 - 1)` which are combinatorial: "choose 2
 distinct individuals from colour 2, both of type Y".  This is correct only
@@ -72,12 +72,12 @@ which replace the 12 pair-weight arguments to the 9 XXYY calls.
 - `colorCnts` (old weighted-count array) — replaced by colorWeight + colorPairWeight
 - Old `XXYY` signature without pair-weight params
 - Old `scorePos` signature without pair-weight params
-- Old wtrial's `speciesWeights` applied as `cnts += weight` (integer count replaced by double)
+- Old alignment_wtrial's `speciesWeights` applied as `cnts += weight` (integer count replaced by double)
 
 ## Performance
 
 | Version | Time | Memory | Math correct? |
 |---------|------|--------|---------------|
-| Old wtrial | 21s | 615 MB | ❌ |
-| New wtrial (pair-weight) | 27s | 615 MB | ✅ |
-| CASTER_TRI | 28s | 545 MB | ✅ |
+| Old alignment_wtrial | 21s | 615 MB | ❌ |
+| New alignment_wtrial (pair-weight) | 27s | 615 MB | ✅ |
+| TRIAL | 28s | 545 MB | ✅ |

@@ -2,7 +2,7 @@
 
 ## Purpose
 Validate that the Python XXYY implementation is identical to the C++ version
-in `weighted_trial.hpp`, by testing with specific known numerical inputs and
+in `alignment_wtrial.hpp`, by testing with specific known numerical inputs and
 verifying expected outputs.
 
 ## Files
@@ -11,8 +11,8 @@ verifying expected outputs.
 |------|---------|
 | `weighted.fasta` | 4 species, 2000bp, 10-20% divergence (produces non-uniform weights) |
 | `fasta2ref.txt` | Points to weighted.fasta, ref=A |
-| `xxyy_manual.py` | Python reimplementation of XXYY, pw(), scorePos from weighted_trial.hpp |
-| `results/` | wtrial output (log + tree) |
+| `xxyy_manual.py` | Python reimplementation of XXYY, pw(), scorePos from alignment_wtrial.hpp |
+| `results/` | alignment_wtrial output (log + tree) |
 
 ## Verification method
 
@@ -28,12 +28,12 @@ verifying expected outputs.
 | pw(colour1, A pair) | cp[1][0]=0.5 | 0.5 | PASS |
 | scorePos(synthetic) | Various | (computed) | PASS |
 
-### Running wtrial
+### Running alignment_wtrial
 
 ```bash
 cd test/pairweight_validation/phase2_manual
-../../../bin/wtrial -i fasta2ref.txt -t 1 --initial-round 2 --subsequent-round 1 \
-  --log results/wtrial.log -o results/wtrial.tre
+../../../bin/alignment_wtrial -i fasta2ref.txt -t 1 --initial-round 2 --subsequent-round 1 \
+  --log results/alignment_wtrial.log -o results/alignment_wtrial.tre
 ```
 
 ### Comparing with manual computation
