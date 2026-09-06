@@ -1,11 +1,12 @@
 # caster_trial 项目
 
-系统发育物种树推断工具系列。包含 ASTRAL、CASTER、SISTER、TRIAL、alignment_wtrial 和 chunk_wtrial。
+系统发育物种树推断工具系列。包含 ASTRAL、CASTER、SISTER、TRIAL、alignment_wtrial、chunk_wtrial、
+以及 CASTER 的加权变体 alignment_wcaster、chunk_wcaster（见 `wcaster.md`）。
 
 ## 编译命令
 
 ```bash
-make               # 编译全部工具
+make               # 编译全部工具（astral caster sister trial alignment_wtrial chunk_wtrial）
 make trial         # 仅编译 TRIAL
 make alignment_wtrial  # 仅编译 alignment_wtrial（per-alignment 权重）
 make chunk_wtrial  # 仅编译 chunk_wtrial（per-chunk 权重）
@@ -15,6 +16,7 @@ make chunk_wtrial  # 仅编译 chunk_wtrial（per-chunk 权重）
 - 标准：C++20，`-std=c++20 -march=native -Ofast`
 - 所有工具共用 `src/driver.cpp`，通过预处理器宏选择编译：
   `-D ASTRAL`、`-D CASTER`、`-D SISTER`、`-D TRIAL`、`-D ALIGNMENT_WTRIAL`、`-D CHUNK_WTRIAL`
+- wcaster 系列（`-D ALIGNMENT_WCASTER` / `-D CHUNK_WCASTER`）暂未加入 makefile，见 `wcaster.md`
 
 ## 项目结构
 
@@ -36,6 +38,8 @@ src/
 ├── trial.hpp                     # TRIAL 工具（参考物种三角剖分）
 ├── alignment_wtrial.hpp          # alignment_wtrial 工具（per-alignment 加权）
 ├── chunk_wtrial.hpp              # chunk_wtrial 工具（per-chunk 加权）
+├── alignment_wcaster.hpp         # alignment_wcaster 工具（CASTER + per-alignment 加权）
+├── chunk_wcaster.hpp             # chunk_wcaster 工具（CASTER + per-chunk 加权）
 ├── sister.hpp                    # SISTER 工具
 └── documentation.hpp             # DocumentationBase 基类
 ```
@@ -224,7 +228,7 @@ while (AP2.nextSeq()):
 | 编译宏 | `-D ALIGNMENT_WTRIAL` | `-D CHUNK_WTRIAL` |
 | 二进制 | `bin/alignment_wtrial` | `bin/chunk_wtrial` |
 | 命名空间 | `alignment_wtrial` | `chunk_wtrial` |
-| 默认 chunk | 10000 | 10000（`--chunk` 可配） |
+| 默认 chunk | 10000 | 1000（`--chunk` 可配） |
 | 评分 | colorPairWeight 精确 | colorPairWeight 精确 |
 | 相似度统计范围 | 全序列（无 bug） | 全 chunk 范围（修复前仅多样性位点） |
 | 数学正确性 | ✓ | ✓ |
@@ -242,7 +246,7 @@ while (AP2.nextSeq()):
 修复前 chunk≤2000 的 RF=8~10、chunk=50000 的 RF=2，修复后全部归零。
 bootstrap 随 chunk 增大略增（Leopardus/Caracal 分支 92.6→96.3），说明更大 chunk 权重更稳。
 
-推荐默认 chunk=10000，需要更细粒度时可用 chunk=5000。
+默认 chunk 现为 1000（与 chunk_wcaster 一致）；需要更粗/更稳权重时可调大 `--chunk`（如 5000/10000）。
 
 ---
 
@@ -281,13 +285,16 @@ test/
 │   ├── phase1_weight1/         # RF=0 + bootstrap 逐位验证（quadPos 正确）
 │   └── phase2_manual/          # Python XXYY 独立实现 + 单元测试
 ├── score_validation/           # 数字验证（weighted/TRIAL = 权重乘积）
-└── debug_mapping/              # 集群 -a mapping 诊断
+├── debug_mapping/              # 集群 -a mapping 诊断
+└── wcaster_validation/         # wcaster 退化测试（deg_weight1/deg_quartet/cat_weight_compare/
+                               #   chunk_deg_sim/cat_chunk_compare），见 wcaster.md
 example/
 ├── cat/                        # 猫科全基因组（570 MB, 10 Felidae）
 │   ├── test_full.fasta
 │   ├── fasta2ref.txt
+│   ├── true_species_tree.nwk   # 参考真实树（去 bootstrap，cat 测试复用）
 │   └── results_*/              # CASTER / TRIAL / weighted 对比
-├── test_small/
+└── test_small/
 ```
 
 ## 工具库
