@@ -8,8 +8,10 @@ bin/
 doc/
 log.txt
 *.tre
+*.log
 example/cat/test_full.fasta
 example/test_cal/caster
 example/test_cal/caster_tri
+test/wcaster_validation/*/results/
 __pycache__/
 *.pyc

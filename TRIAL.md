@@ -287,7 +287,7 @@ example/
 │   ├── test_full.fasta
 │   ├── fasta2ref.txt
 │   └── results_*/              # CASTER / TRIAL / weighted 对比
-├── test_small/ + test_multi_ref/
+├── test_small/
 ```
 
 ## 工具库
