@@ -495,6 +495,21 @@ template<typename DataClass> DataClass read() {
 				}
 			}
 		}
+
+		// ══════════ CHUNK-WTRIAL-DEBUG BEGIN: per-chunk weight dump (gated by --dump-chunk-weights) ══════════
+		if (ARG.has("dump-chunk-weights")) {
+			log.log() << "Chunk weights for alignment file: " << fastaFiles[iFile - 1] << std::endl;
+			vector<pair<string, size_t> > speciesRows; // (species name, row) sorted by name
+			for (auto const& [taxonId, row] : taxon2row)
+				speciesRows.emplace_back(common::taxonName2ID[taxonId], row);
+			std::sort(speciesRows.begin(), speciesRows.end());
+			for (size_t iChunk : iota((size_t) 0, nChunk)) {
+				auto const& element = sharedConstData.elements[iElementBegin + iChunk];
+				for (auto const& [name, row] : speciesRows)
+					log.log() << "chunk " << iChunk << " " << name << " " << element.speciesWeights[row] << std::endl;
+			}
+		}
+		// ══════════ CHUNK-WTRIAL-DEBUG END ══════════
 	}
 
 	std::remove(tempListFile.c_str());
@@ -521,7 +536,8 @@ public:
 	}
 
 	static void addArguments() noexcept {
-		ARG.addArgument('\0', "chunk", "integer", "The maximum number of sites in each local aligment block for parameter estimation", 0, true, true, "10000");
+		ARG.addArgument('\0', "chunk", "integer", "The maximum number of sites in each local aligment block for parameter estimation", 0, true, true, "1000");
+		ARG.addArgument('\0', "dump-chunk-weights", "flag", "Dump per-species per-chunk sequence-similarity weights to the log", 1, true);
 	}
 
 	static DataClasses getStepwiseColorSharedConstData() noexcept {

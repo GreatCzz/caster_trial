@@ -493,6 +493,14 @@ template<typename DataClass> DataClass read() {
 		// WTRIAL: assign weights to all elements of this alignment
 		for (size_t iChunk = 0; iChunk < nChunk; iChunk++)
 			sharedConstData.elements[iElementBegin + iChunk].speciesWeights = speciesWeights;
+
+		// ══════════ WTRIAL-DEBUG-MOD BEGIN: weight dump (debug, compare with alignment_wcaster) ══════════
+		{
+			log.log() << "Species weights for alignment file: " << fastaFiles[iFile - 1] << std::endl;
+			for (auto const& [taxonId, row] : taxon2row)
+				log.log() << "  " << common::taxonName2ID[taxonId] << " = " << speciesWeights[row] << std::endl;
+		}
+		// ══════════ WTRIAL-DEBUG-MOD END ══════════
 	}
 
 	std::remove(tempListFile.c_str());

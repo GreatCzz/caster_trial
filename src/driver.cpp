@@ -2,6 +2,14 @@
 #include "optimization_algorithm.hpp"
 #include "quadripartition_support.hpp"
 
+#ifdef CHUNK_WCASTER
+#include "chunk_wcaster.hpp"
+namespace my_tool = chunk_wcaster;
+#else
+#ifdef ALIGNMENT_WCASTER
+#include "alignment_wcaster.hpp"
+namespace my_tool = alignment_wcaster;
+#else
 #ifdef CHUNK_WTRIAL
 #include "chunk_wtrial.hpp"
 namespace my_tool = chunk_wtrial;
@@ -28,6 +36,8 @@ namespace my_tool = sister;
 #else
 #include "astral.hpp"
 namespace my_tool = astral;
+#endif
+#endif
 #endif
 #endif
 #endif
