@@ -12,10 +12,12 @@ mkdir -p "$RESULTS"
 
 echo "=== alignment_wtrial ==="
 $WTRIAL -i "$FASTA2REF" -t 8 --initial-round 4 --subsequent-round 2 --root "$ROOT" \
+  --dump-chunk-weights \
   --log "$RESULTS/alignment_wtrial.log" --log-verbose 5 -o "$RESULTS/alignment_wtrial.tre" 2>&1 | tail -2
 echo ""
 echo "=== alignment_wcaster ==="
 $WCASTER -i "$FASTA2REF" -t 8 --initial-round 4 --subsequent-round 2 --root "$ROOT" \
+  --dump-chunk-weights \
   --log "$RESULTS/alignment_wcaster.log" --log-verbose 5 -o "$RESULTS/alignment_wcaster.tre" 2>&1 | tail -2
 echo ""
 echo "=== weight comparison ==="

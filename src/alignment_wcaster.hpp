@@ -454,8 +454,8 @@ template<typename DataClass> DataClass read() {
 		for (size_t iChunk = 0; iChunk < nChunk; iChunk++)
 			sharedConstData.elements[iElementBegin + iChunk].speciesWeights = speciesWeights;
 
-		// ══════════ WCASTER-MOD ⑩ BEGIN: weight dump (debug, compare with alignment_wtrial) ══════════
-		{
+		// ══════════ WCASTER-MOD ⑩ BEGIN: weight dump (gated by --dump-chunk-weights, default OFF) ══════════
+		if (ARG.has("dump-chunk-weights")) {
 			log.log() << "Species weights for alignment file: " << fastaFiles[iFile - 1] << std::endl;
 			for (auto const& [taxonId, row] : taxon2row)
 				log.log() << "  " << common::taxonName2ID[taxonId] << " = " << speciesWeights[row] << std::endl;
@@ -490,6 +490,7 @@ public:
 
 	static void addArguments() noexcept {
 		ARG.addArgument('\0', "chunk", "integer", "The maximum number of sites in each local aligment block for parameter estimation", 0, true, true, "10000");
+		ARG.addArgument('\0', "dump-chunk-weights", "flag", "Dump per-species weights to the log (default OFF)", 1, true);
 	}
 
 	static DataClasses getStepwiseColorSharedConstData() noexcept {

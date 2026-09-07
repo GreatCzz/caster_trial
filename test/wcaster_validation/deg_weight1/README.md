@@ -15,7 +15,7 @@
 ## 运行
 
 ```bash
-./run.sh        # bin/caster 与 bin/alignment_wcaster, --chunk 800 -t 1 --initial-round 4 --subsequent-round 2
+./run.sh        # bin/caster 与 bin/alignment_wcaster(传 --dump-chunk-weights), --chunk 800 -t 1 --initial-round 4 --subsequent-round 2
 python3 verify.py
 ```
 

@@ -119,11 +119,15 @@ w = (sim < 0.25) ? 0.0 : (sim - 0.25) / 0.75 ;  ref 权重 = 1.0
 ```
 保留 bool/uchar/ushort 三档 `maxSpeciesman` 溢出检查；去掉 priorityTaxa/refColor 逻辑。
 
-### 3.10 权重 dump（调试用）
-- **alignment 版**：`WCASTER-MOD ⑩` 每 alignment 输出每物种单值权重（恒开，用于与 alignment_wtrial 对比；
-  alignment_wtrial 侧 `WTRIAL-DEBUG-MOD` 同格式）。
-- **chunk 版**：权重为 per-chunk（每物种每 chunk 不同），改为 `--dump-chunk-weights` flag **默认关闭**
-  控制：输出 `chunk <idx> <species> <weight>`（按 chunk/物种名排序）。chunk_wtrial 亦加同 flag（`CHUNK-WTRIAL-DEBUG`）。
+### 3.10 权重 dump（调试用，默认关闭）
+- **alignment 版**：`WCASTER-MOD ⑩` 每 alignment 输出每物种单值权重，由 **`--dump-chunk-weights` flag（默认关闭）** 控制
+  （alignment_wtrial 侧 `WTRIAL-DEBUG-MOD` 同 flag）。
+- **chunk 版**：权重为 per-chunk（每物种每 chunk 不同），同样由 `--dump-chunk-weights` flag（默认关闭）控制，
+  输出 `chunk <idx> <species> <weight>`（按 chunk/物种名排序）；chunk_wtrial 同 flag（`CHUNK-WTRIAL-DEBUG`）。
+
+> 说明：权重 dump 涉及逐物种（alignment）或逐 chunk×物种（chunk）的输出，开销较大，默认一律关闭；
+> 需要对比验证时才传 `--dump-chunk-weights`。相关测试脚本（deg_weight1/deg_quartet/cat_weight_compare）
+> 均显式传入该 flag。
 
 ### 3.11 Driver
 `DataClasses` → 3 变体（`<bool>/<uchar>/<ushort>`）；chunk 默认 10000（alignment）/ 1000（chunk）；
@@ -136,8 +140,8 @@ w = (sim < 0.25) ? 0.0 : (sim - 0.25) / 0.75 ;  ref 权重 = 1.0
 
 ## 4. 相关代码改动（wtrial 侧，供对比）
 
-- `chunk_wtrial.hpp`：默认 chunk `10000`→`1000`；新增 `--dump-chunk-weights` flag（默认关闭）与 per-chunk dump。
-- `alignment_wtrial.hpp`：`WTRIAL-DEBUG-MOD` 每 alignment 物种单值权重 dump（恒开）。
+- `chunk_wtrial.hpp`：默认 chunk `10000`→`1000`；`--dump-chunk-weights` flag（默认关闭）与 per-chunk dump。
+- `alignment_wtrial.hpp`：`WTRIAL-DEBUG-MOD` 每 alignment 物种单值权重 dump，由 `--dump-chunk-weights` flag（默认关闭）控制。
 
 ---
 

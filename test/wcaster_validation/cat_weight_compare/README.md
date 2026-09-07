@@ -18,9 +18,9 @@ wcaster 是 CASTER 派生（全局计分），wtrial 是 TRIAL 派生（ref 限�
 | `results/alignment_wcaster.{log,tre}` | alignment_wcaster 输出 |
 | `results/weight_compare.txt` | 逐物种权重对照表 |
 
-> 权重 dump 说明：wtrial 的 `alignment_wtrial.hpp` 含 WTRIAL-DEBUG-MOD 调试输出，
-> wcaster 的 `alignment_wcaster.hpp` 含 WCASTER-MOD ⑩ 调试输出，格式一致：
-> `Species weights for alignment file: ...` + 每物种 `  <name> = <weight>`。
+> 权重 dump 说明：两工具的权重 dump 由 **`--dump-chunk-weights` flag（默认关闭）** 控制（run.sh 显式传入）：
+> wtrial 的 `alignment_wtrial.hpp` 含 WTRIAL-DEBUG-MOD、wcaster 的 `alignment_wcaster.hpp` 含 WCASTER-MOD ⑩，
+> 格式一致：`Species weights for alignment file: ...` + 每物种 `  <name> = <weight>`。
 
 ## 运行命令
 
@@ -28,7 +28,7 @@ wcaster 是 CASTER 派生（全局计分），wtrial 是 TRIAL 派生（ref 限�
 cd test/wcaster_validation/cat_weight_compare && ./run.sh
 ```
 
-参数：`-t 8 --initial-round 4 --subsequent-round 2 --root Canis_lupus_familiaris`（同 example/cat 历史 run）。
+参数：`-t 8 --initial-round 4 --subsequent-round 2 --root Canis_lupus_familiaris --dump-chunk-weights`（同 example/cat 历史 run；dump flag 默认关闭，本测试需显式开启）。
 
 ## 测试结果（2026-09-06）
 

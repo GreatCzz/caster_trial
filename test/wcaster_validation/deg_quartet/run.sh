@@ -9,10 +9,12 @@ mkdir -p "$RESULTS"
 
 echo "=== alignment_wcaster ==="
 $WCASTER -i fasta2ref.txt -t 1 --initial-round 4 --subsequent-round 2 --chunk 10000 \
+  --dump-chunk-weights \
   --log "$RESULTS/alignment_wcaster.log" -o "$RESULTS/alignment_wcaster.tre" 2>&1 | tail -3
 echo ""
 echo "=== alignment_wtrial ==="
 $WTRIAL -i fasta2ref.txt -t 1 --initial-round 4 --subsequent-round 2 --chunk 10000 \
+  --dump-chunk-weights \
   --log "$RESULTS/alignment_wtrial.log" -o "$RESULTS/alignment_wtrial.tre" 2>&1 | tail -3
 echo ""
 echo "=== trees ==="

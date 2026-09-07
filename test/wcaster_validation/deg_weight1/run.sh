@@ -13,6 +13,7 @@ $CASTER -i test.fasta -t 1 --initial-round 4 --subsequent-round 2 --chunk 800 \
 echo ""
 echo "=== alignment_wcaster ==="
 $WCASTER -i fasta2ref.txt -t 1 --initial-round 4 --subsequent-round 2 --chunk 800 \
+  --dump-chunk-weights \
   --log "$RESULTS/alignment_wcaster.log" -o "$RESULTS/alignment_wcaster.tre" 2>&1 | grep -E "Species weights|Score:|Final tree" | tail -20
 echo ""
 echo "=== trees ==="

@@ -13,7 +13,7 @@ a≈0.9533, b≈0.9353, c≈0.8267, ref=1。
 ## 运行
 
 ```bash
-./run.sh        # bin/alignment_wcaster 与 bin/alignment_wtrial, 同 fasta2ref
+./run.sh        # bin/alignment_wcaster 与 bin/alignment_wtrial(均传 --dump-chunk-weights), 同 fasta2ref
 python3 verify.py
 ```
 
