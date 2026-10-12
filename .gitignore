@@ -16,3 +16,8 @@ test/wcaster_validation/*/results/
 __pycache__/
 *.pyc
 __trash__/
+test/
+update/
+CASTER.md
+wcaster.md 
+TRIAL.md 
